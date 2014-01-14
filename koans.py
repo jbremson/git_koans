@@ -92,6 +92,10 @@ def sys_reset():
     work = State.dir_path("work/")
     cmd("rm -rf " + work)
     State.reset_counter()
+    try:
+        cmd("rm -rf " + State.cd("set_a"))
+    except (OSError,TypeError):
+        pass
     cmd("mkdir " + work)
 
     cmd("touch " + State.dir_path("work/.empty"))
@@ -273,20 +277,31 @@ def koan_5(*args,**kwargs):
     # remove file d1.o from the directory and make sure that .o files are not committed.
     # finally, resolve a staging issue with a1 */
 
-    source = State.dir_path(".sets")
-    target = State.dir_path("set_a")
-
-
-
-    distutils.dir_util.copy_tree(source,target)
 
     # pull the dir from sets/set_a and stage it where the user can access it.
 
+    test,answers = test_vals(*args,**kwargs)
+    source = State.dir_path(".sets")
+    target = State.dir_path("set_a")
+
+    distutils.dir_util.copy_tree(source,target)
+
+    # wait for user input
+    out = raw_input("Press any key when you are ready for your work to be checked.")
     # test - clone the dir after the user commits. Should find
     # a1, b1, c1 with no d1.o
+    print """Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
+that no *.o files are allowed. Watch for a commit problem (hint: observe your status.)"""
+
+    #
+    State.cd()
+    out = cmd("git clone set_a tmp")
+    print out
 
     #clean up
     # delete the set_a working directory to clean
+    out = raw_input("Press any key when you are ready for your work to be checked.")
+    out = cmd("rm -rf tmp")
     return True
 
 
