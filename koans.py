@@ -28,6 +28,7 @@ class State:
 
     keep = {'counter':1}
     dir = os.path.abspath("")
+    cwd = dir
 
 
     try:
@@ -61,6 +62,7 @@ Returns path string."""
         """Change dir to 'dir', relative to the koans home dir. If dir is left blank
         , cd to git_koans home dir."""
         target = cls.dir_path(dir)
+        cls.cwd = target
         os.chdir(target)
 
     @classmethod
@@ -209,6 +211,7 @@ def koan_3(*args,**kwargs):
     else:
         out = raw_input("Now commit your changes with the 'git commit -a' command. Note that\nyou" +
 "are in your repo directory 'work'. Also, you will need to add a message to your commit. How?\n./work >>")
+    print "In dir : " + State.cwd
     rv = cmd(out)
     print rv
     out = re.search("\[master \(root\-commit\)", rv )
