@@ -165,9 +165,8 @@ def koan_1(*args,**kwargs):
 def koan_2(*args,**kwargs):
     """Add a file."""
     test,answers = test_vals(*args,**kwargs)
-    cwd = os.getcwd()
     ret_val = False
-    final =  cwd.split("/")[-1]
+    final =  State.cwd.split("/")[-1]
     if not final == "work":
         State.cd("work")
     if test:
@@ -177,7 +176,7 @@ def koan_2(*args,**kwargs):
                     "an empty file called 'foo' (hint: touch foo)\n>>");
 
     retval = cmd(out)
-    if os.path.isfile("./foo"):
+    if os.path.isfile(State.dir_path("foo")):
         if test:
             out = answers.popleft()
         else:
