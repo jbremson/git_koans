@@ -12,9 +12,10 @@ print out
 out = koans.koan_3('test',answers=['git status']) # Failure test - wrong answers
 out = koans.koan_3('test',answers=['git commit -m "test"'])
 print out
-os.chdir(koans.State.workdir)
+koans.State.cd('work')
 out = koans.cmd("echo 'baz\n*.a' > .gitignore")
 print out
-os.chdir("..")
+koans.State.cd()
 out = koans.koan_4('test',[])
+out = koans.koan_5('test',[])
 print out

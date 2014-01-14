@@ -10,7 +10,7 @@ __date__ = "1/13/14"
 3. Do your work in the koan and clean up so that cwd is in the right place when you exit.
 4. If the koan is passed return True, otherwise return False.
 
-To start fresh rm the .koan_state file in ./git_test  .
+To start fresh rm the .koan_state file in ./git_koans  .
 """
 
 import os
@@ -18,6 +18,7 @@ import pickle
 import subprocess
 import re
 from collections import deque
+import distutils.dir_util
 
 #Test file for git koans
 
@@ -26,12 +27,13 @@ class State:
     restart. This will only work if the user hasn't altered the archive state."""
 
     keep = {'counter':1}
-    workdir = "../git_test/work"
+    dir = os.path.abspath("")
 
 
-    print "Init called.\n"
     try:
-        f = open("../git_test/.koans_state","r")
+
+        target = os.path.abspath(".koans_state")
+        f = open(target,"r")
         inval = pickle.load(f)
         keep['counter'] = inval['counter']
 
@@ -39,10 +41,27 @@ class State:
         # no prior state to return to.
         print "In exception of __init__"
 
-        f = open("../git_test/.koans_state","w")
+        f = open(target,"w")
         pickle.dump(keep,f)
         f.close()
 
+
+    @classmethod
+    def dir_path(cls,dir=None):
+        """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
+Returns path string."""
+        if dir == None:
+            out = cls.dir
+        else:
+            out = os.path.abspath(dir)
+        return out
+
+    @classmethod
+    def cd(cls,dir=None):
+        """Change dir to 'dir', relative to the koans home dir. If dir is left blank
+        , cd to git_koans home dir."""
+        target = cls.dir_path(dir)
+        os.chdir(target)
 
     @classmethod
     def inc_counter(cls):
@@ -56,7 +75,8 @@ class State:
 
     @classmethod
     def save_state(cls):
-        f = open("../git_test/.koans_state","w")
+        target = cls.dir_path(".koans_state")
+        f = open(target,"w")
         pickle.dump(cls.keep,f)
         f.close()
 
@@ -69,11 +89,12 @@ class State:
 def sys_reset():
     print ("Resetting koans to initial state...")
     # make this safer
-    cmd("rm -rf ../git_test/work/")
-    #cmd("rm -rf ../git_test/.koans_state")
+    work = State.dir_path("work/")
+    cmd("rm -rf " + work)
     State.reset_counter()
-    cmd("mkdir ../git_test/work/")
-    cmd("touch ../git_test/work/.empty")
+    cmd("mkdir " + work)
+
+    cmd("touch " + State.dir_path("work/.empty"))
 
 def cmd(cmd,verbose=False):
     """Calls subprocess.check_output with 'shell=True' and stderr redirection. Returns
@@ -142,7 +163,7 @@ def koan_2(*args,**kwargs):
     ret_val = False
     final =  cwd.split("/")[-1]
     if not final == "work":
-        os.chdir("../git_test/work")
+        State.cd("work")
     if test:
         out = answers.popleft()
     else:
@@ -167,9 +188,9 @@ will make it tracked by officially adding it to the repository."""
                 print """The file has been added. It is now a 'tracked file.' The add command does
 more than just add to the repo though, as we will see later."""
                 print "\n\nNext we will learn about basic commits.\n\n"
-                os.chdir("..")
+                State.cd()
         except AttributeError:
-            os.chdir("..")
+            State.cd()
             pass
     return ret_val
 
@@ -178,8 +199,7 @@ def koan_3(*args,**kwargs):
     """Commit file."""
     test,answers = test_vals(*args,**kwargs)
     ret_val = False
-    loc = os.getcwd()
-    os.chdir("../git_test/work")
+    State.cd("work")
     if test:
         out = answers.popleft()
     else:
@@ -193,7 +213,7 @@ def koan_3(*args,**kwargs):
             ret_val = True
     except AttributeError:
         pass
-    os.chdir("..")
+    State.cd()
     return ret_val
 
 @koan
@@ -207,7 +227,7 @@ I will check your work for you."""
     print """\n\nThis koan is about the '.gitignore' file feature. Sometimes you have files
 you don't want git to ever track.\n\n.In your /work repo create a .gitignore
 file that does 1) ignores files called 'baz' and 2) ignores any files that match *.a ."""
-    os.chdir(State.workdir)
+    State.cd()
     if not test:
         raw_input("Press any key when you are done.")
     out = cmd("echo 'text' > baz")
@@ -239,16 +259,36 @@ file that does 1) ignores files called 'baz' and 2) ignores any files that match
         print out
         pass
 
-    os.chdir("..")
+    State.cd() # return to base working dir
     return retval
 
 def koan_5(*args,**kwargs):
-	"""This koan is a small puzzle in which the user is asked to figure out which file has been 
-modified since staging. The answer can be found with 'status'."""
+    """This koan is a small puzzle in which the user is asked to figure out which file has been
+        modified since staging. The answer can be found with 'status'."""
+
+
+    # this koan will work with set_a.zip
+    # tasks include
+    # file b1 is in the directory but will not commit why? (fix .gitignore
+    # remove file d1.o from the directory and make sure that .o files are not committed.
+    # finally, resolve a staging issue with a1 */
+
+    source = State.dir_path(".sets")
+    target = State.dir_path("set_a")
 
 
 
-	return True # so it passes the test for now.
+    distutils.dir_util.copy_tree(source,target)
+
+    # pull the dir from sets/set_a and stage it where the user can access it.
+
+    # test - clone the dir after the user commits. Should find
+    # a1, b1, c1 with no d1.o
+
+    #clean up
+    # delete the set_a working directory to clean
+    return True
+
 
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"

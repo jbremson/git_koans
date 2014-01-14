@@ -1,0 +1,9 @@
+set_*
+*.pyc
+baz
+*.a
+.idea
+work/foo
+work/.gitignore
+.koans_state
+
