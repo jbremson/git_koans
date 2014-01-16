@@ -19,6 +19,7 @@ import subprocess
 import re
 from collections import deque
 import distutils.dir_util
+import shutil
 
 #Test file for git koans
 
@@ -48,7 +49,7 @@ class State:
 
 
     @classmethod
-    def dir_path(cls,dir=None):
+    def abs_path(cls,dir=None):
         """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
 Returns path string."""
         if dir == None:
@@ -61,7 +62,7 @@ Returns path string."""
     def cd(cls,dir=None):
         """Change dir to 'dir', relative to the koans home dir. If dir is left blank
         , cd to git_koans home dir."""
-        target = cls.dir_path(dir)
+        target = cls.abs_path(dir)
         cls.cwd = target
         os.chdir(target)
 
@@ -77,7 +78,7 @@ Returns path string."""
 
     @classmethod
     def save_state(cls):
-        target = cls.dir_path(".koans_state")
+        target = cls.abs_path(".koans_state")
         f = open(target,"w")
         pickle.dump(cls.keep,f)
         f.close()
@@ -91,16 +92,17 @@ Returns path string."""
 def sys_reset():
     print ("Resetting koans to initial state...")
     # make this safer
-    work = State.dir_path("work/")
+    work = State.abs_path("work/")
     cmd("rm -rf " + work)
     State.reset_counter()
-    try:
-        cmd("rm -rf " + State.cd("set_a"))
-    except (OSError,TypeError):
-        pass
+    for dir in ["set_a","tmp"]:
+        try:
+            cmd("rm -rf " + State.cd(dir))
+        except (OSError,TypeError):
+            pass
+    # work directory is something to think about
     cmd("mkdir " + work)
-
-    cmd("touch " + State.dir_path("work/.empty"))
+    cmd("touch " + State.abs_path("work/.empty"))
 
 def cmd(cmd,verbose=False):
     """Calls subprocess.check_output with 'shell=True' and stderr redirection. Returns
@@ -132,8 +134,7 @@ def koan(fxn):
         else: # failed
             print ("\n\nThrough failure learning is achieved. Try it again.\n\n")
             if not test:
-                # something in here?? ::w
-
+                # this runs the caller fxn !!!
                 globals()[fxn.__name__](header=False)
         return success
     return new_fxn
@@ -149,9 +150,14 @@ def git_set_tree(repo):
     """Set the working repo to 'repo'. This is assumed to sit in the dir under /git_koans. Always.
 
 This is required because there are a lot of git repos potentially floating about in the workspace."""
-    target = State.dir_path(repo)
+    target = State.abs_path(repo)
     out = cmd("git config --git_dir " + target)
     print out
+
+def solution_script(set):
+    """Run the solution script for 'set' . This is an eval'ed python script. It
+    is a debugging tool"""
+    #### THINK ABOUT HOW TO IMPLEMENT THIS ####
 
 
 
@@ -177,7 +183,7 @@ def koan_1(*args,**kwargs):
     print cmd_ret
     # check to see if there is a .git dir in work...
 
-    if(os.path.isdir(State.dir_path("work/.git"))):
+    if(os.path.isdir(State.abs_path("work/.git"))):
         State.cd("work")
         out = cmd("touch .gitconfig") # make sure git commands run in this dir point to this git repo
         retval = True
@@ -203,7 +209,7 @@ def koan_2(*args,**kwargs):
 
     retval = cmd(out)
     print retval
-    if os.path.isfile(State.dir_path("foo")):
+    if os.path.isfile(State.abs_path("foo")):
         if test:
             out = answers.popleft()
         else:
@@ -267,7 +273,7 @@ you don't want git to ever track.\n\n.In your /work repo create a .gitignore
 file that does 1) ignores files called 'baz' and 2) ignores any files that match *.a ."""
     State.cd("work")
     if not test:
-        out = raw_input("Press any key when you are done.")
+        out = raw_input("Press Enter key when you are done.")
         if out == "\t":
             cmd("echo 'baz\n*.a' > .gitignore")
 
@@ -309,6 +315,11 @@ def koan_5(*args,**kwargs):
         modified since staging. The answer can be found with 'status'."""
 
     test,answers = test_vals(*args,**kwargs)
+    answers = list(answers)
+    workset = "set_a"
+
+
+    retval = False
 
     # this koan will work with set_a.zip
     # tasks include
@@ -319,31 +330,61 @@ def koan_5(*args,**kwargs):
 
     # pull the dir from sets/set_a and stage it where the user can access it.
 
-    source = State.dir_path(".sets/set_a")
-    print "source " + source
-    target = State.dir_path("work_a")
-    print "target " + target
+    if test:
+        for loc in [workset,'tmp']:
+            shutil.rmtree(State.abs_path(loc),ignore_errors=True)
 
-    distutils.dir_util.copy_tree(source,target)
+    if not os.path.isdir(State.abs_path(workset)):
+        source = State.abs_path(".sets/" + workset)
+        target = State.abs_path(workset)
+
+        shutil.copytree(source,target)
     print """Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
 that no *.o files are allowed. Watch for a commit problem (hint: observe your status.)"""
 
     # wait for user input
-    out = raw_input("Press Enter key when you are ready for your work to be checked.")
+
+    if test:
+        State.cd(workset)
+        for item in answers:
+            print item
+            out = cmd(item)
+        State.cd()
+    else:
+        out = raw_input("Press Enter key when you are ready for your work to be checked.")
+        # run code to pass test.
+
     # test - clone the dir after the user commits. Should find
     # a1, b1, c1 with no d1.o
 
     #
     State.cd()
-    print "in: " + State.cwd
-    out = cmd("git clone set_a tmp")
-    print out
+    out = cmd("rm -rf " + State.abs_path("tmp"))
+    print "rm -rf tmp " + out
+    out = cmd("git clone -l "+ workset + " " + State.abs_path("tmp"))
+    add_problem = False
+    for elem in ['a1','b1','c1']:
+        if not os.path.isfile(State.abs_path("tmp/"+elem)):
+            print "Problem: file " + elem + " not found."
+            add_problem = True
 
+    State.cd("tmp")
+    cmd("touch d1.o")
+    out = cmd("git add d1.o")
+    o_problem = False
+    if out == None: # if out is empty than then the add was allowed.
+        o_problem = True  # since the add was allowed signal a problem
+    else:
+        print out + "**\n\n"
+
+    if not o_problem and not add_problem:
+        retval=True
     #clean up
     # delete the set_a working directory to clean
-    out = raw_input("Press Enter key when you are ready for your work to be checked.")
-    #out = cmd("rm -rf tmp")
-    return True
+    out = raw_input("DEBUG -- Press Enter key when you are ready for your work to be checked.")
+    State.cd()
+    print "Koan 5 retval: " + str(retval)
+    return retval
 
 
 if __name__ == "__main__":
