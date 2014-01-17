@@ -1,0 +1,1 @@
+Git doesn't like committing a .git directory in the sets and pushing it. Trying to change the name to .mit in the gkb branch to see if that is a workaround.

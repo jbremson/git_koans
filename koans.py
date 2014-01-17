@@ -94,12 +94,18 @@ Returns path string."""
         source = cls.abs_path(".sets/" + workset)
         target = cls.abs_path(workset)
         shutil.copytree(source,target)
+        State.cd(workset)
+        out = cmd("mv .mit .git")
+        out = cmd("git init")
 
         try:
             os.rmdir(cls.abs_path('tmp'))
         except OSError:
             pass
-        os.mkdir(cls.abs_path('tmp'))
+        State.cd()
+        print "Making dir tmp in base dir"
+        out = pause()
+        out = cmd("mkdir tmp")
 
     @classmethod
     def delete_workset(cls,workset):
@@ -441,10 +447,11 @@ hash string. Check it out now. (hint: git log --pretty=oneline)\n\n """
 
     print """I was working on two songs, one about a girl named mary, called 'mary'
 and one about a boat, called 'row'. I stepped away and my cat got on the
-computer, added to the songs and committed them. See if you can get them back
+computer and made some changes. See if you can get them back
 to the pre-cat state.
 
-Use the 'checkout' command to modify the repo back to the pre-cat final commit."""
+Use the 'checkout' and commit hash identifiers  to modify the repo
+back to the pre-cat final commit."""
 
     if test:
         # use answers
@@ -455,11 +462,12 @@ Use the 'checkout' command to modify the repo back to the pre-cat final commit."
     # check that mary song has no meows in it.
     State.cd(workset)
     out = cmd("git status")
+    print "git status - " + out
     match = re.search("# HEAD detached at 0a1366f",out)
-    if match.group():
+    if not match == None and match.group():
         # next level
         print "Yes! My songs are back. Kitty is foiled again.!\n"
-        print "\n\Notice that the log only has 3 entries now, not 5."
+        print "\nNotice that the log only has 3 entries now, not 5."
         out = pause()
         retval = True
         print """But commit identifier hashes can be hard to remember. We can also use
@@ -467,12 +475,15 @@ tags. Try the 'git tag' command. Then move the state to the second commit using
 the tag name as the commit identifier.\n """
         out = pause()
         out = cmd("git status")
-        match = re.search("HEAD is now at 8eb00f3",out)
-        if match.group():
+        print out
+        match = re.search("# HEAD detached at v0.2",out)
+        if not match == None and match.group():
             print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
             print "(hint - the last commit is tagged 'master')"
             out = pause()
             out = cmd("git status")
+            print "git status - " + out
+
             match = re.search("# On branch master",out)
             if match.group():
                 print "Yes! All is restored. Complete!\n"
