@@ -25,3 +25,6 @@ print out
 print "koan 5 success test is "
 out = koans.koan_5('test',answers=["echo '*.o' > .gitignore","git add a1 b1 c1 .gitignore","git commit -m 'test commit'"])
 print out
+out = koans.koan_6('test',answers=[])
+print out
+

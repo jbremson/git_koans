@@ -88,6 +88,31 @@ Returns path string."""
         """Returns the value of counter."""
         return cls.keep['counter']
 
+    @classmethod
+    def load_workset(cls,workset):
+        """Creates a git directory for 'workset' and also a 'tmp' directory for inspection."""
+        source = cls.abs_path(".sets/" + workset)
+        target = cls.abs_path(workset)
+        shutil.copytree(source,target)
+
+        try:
+            os.rmdir(cls.abs_path('tmp'))
+        except OSError:
+            pass
+        os.mkdir(cls.abs_path('tmp'))
+
+    @classmethod
+    def delete_workset(cls,workset):
+        """Deletes dir for 'workset' (git repo) and the tmp dir."""
+        for loc in [workset,'tmp']:
+            shutil.rmtree(State.abs_path(loc),ignore_errors=True)
+
+
+
+
+
+
+
 
 def sys_reset():
     print ("Resetting koans to initial state...")
@@ -154,33 +179,32 @@ This is required because there are a lot of git repos potentially floating about
     out = cmd("git config --git_dir " + target)
     print out
 
-def solution_script(set):
-    """Run the solution script for 'set' . This is an eval'ed python script. It
-    is a debugging tool"""
-    #### THINK ABOUT HOW TO IMPLEMENT THIS ####
 
-
-
-
+def pause():
+    """Prints 'Press 'Enter' when ready' and takes an input. Returns input string."""
+    val = raw_input("Press 'Enter' when ready.")
+    return val
     
 
 @koan
 def koan_1(*args,**kwargs):
     """Init the first repo."""
-    auto = "git init ./work"
     retval = False
     test,answers = test_vals(*args,**kwargs)
     State.cd()
     if test:
         cmd_ret = cmd(answers.popleft())
     else:
-        out =  raw_input("Koan 1: Init git in the /work directory... (hint: git init ./work)\n>>")
+        dirp = State.abs_path("work")
+        out =  raw_input("Koan 1: In another shell, init a repository in the\n" + dirp + "\n directory. Press Enter when done.")
+        print out
         if out == "\t":
-            out = auto
+            State.cd(dirp)
+            out = cmd("git init")
             print out
+            State.cd()
         cmd_ret = cmd(out)
 
-    print cmd_ret
     # check to see if there is a .git dir in work...
 
     if(os.path.isdir(State.abs_path("work/.git"))):
@@ -200,22 +224,22 @@ def koan_2(*args,**kwargs):
         State.cd("work")
     if test:
         out = answers.popleft()
+        cmd(out)
     else:
-        out = raw_input("Koan 2: Now we will add a file to the 'work' repo. First create " +
-                    "an empty file called 'foo' (hint: touch foo)\n>>");
+        out = raw_input("Koan 2: Now create a file called 'foo' to the work repo. Press Enter when done.")
         if out == "\t":
             out = "touch foo"
             print out
+        retval = cmd(out)
+        print retval
 
-    retval = cmd(out)
-    print retval
     if os.path.isfile(State.abs_path("foo")):
         if test:
             out = answers.popleft()
         else:
             print """\n\nYou have now created what git calls an 'untracked file'. Next we
 will make it tracked by officially adding it to the repository."""
-            out = raw_input("\n\n. Add the file to git with 'git add foo'\n>>")
+            out = raw_input("\n\n Add the file to git (hint: git add --help) and press Enter.")
         if out == "\t":
             out = "git add foo"
             print out
@@ -239,13 +263,14 @@ more than just add to the repo though, as we will see later."""
 def koan_3(*args,**kwargs):
     """Commit file."""
     test,answers = test_vals(*args,**kwargs)
+    State.cd()
     ret_val = False
     State.cd("work")
     if test:
         out = answers.popleft()
     else:
         out = raw_input("Now commit your changes with the 'git commit -a' command. Note that\nyou" +
-"are in your repo directory 'work'. Also, you will need to add a message to your commit. How?\n./work >>")
+"are in your repo directory 'work'. Also, you will need to add a message to your commit. Enter when done.")
         if out == "\t":
             out = "git commit -a -m 'x'"
             print out
@@ -265,8 +290,6 @@ def koan_4(*args,**kwargs):
     """.gitignore koan."""
     test,answers=test_vals(*args,**kwargs)
     retval = False
-    print """For this koan you will need to open another shell window. When you are ready
-I will check your work for you."""
 
     print """\n\nThis koan is about the '.gitignore' file feature. Sometimes you have files
 you don't want git to ever track.\n\n.In your /work repo create a .gitignore
@@ -331,14 +354,11 @@ def koan_5(*args,**kwargs):
     # pull the dir from sets/set_a and stage it where the user can access it.
 
     if test:
-        for loc in [workset,'tmp']:
-            shutil.rmtree(State.abs_path(loc),ignore_errors=True)
+        State.delete_workset(workset)
+
 
     if not os.path.isdir(State.abs_path(workset)):
-        source = State.abs_path(".sets/" + workset)
-        target = State.abs_path(workset)
-
-        shutil.copytree(source,target)
+        State.load_workset(workset)
     print """Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
 that no *.o files are allowed. Watch for a commit problem (hint: observe your status.)"""
 
@@ -352,6 +372,13 @@ that no *.o files are allowed. Watch for a commit problem (hint: observe your st
         State.cd()
     else:
         out = raw_input("Press Enter key when you are ready for your work to be checked.")
+        if out == "\t": # debugging hack - remove this later
+            answers=["echo '*.o' > .gitignore","git add a1 b1 c1 .gitignore","git commit -m 'test commit'"]
+            State.cd(workset)
+            for item in answers:
+                print item
+                out = cmd(item)
+            State.cd()
         # run code to pass test.
 
     # test - clone the dir after the user commits. Should find
@@ -381,11 +408,89 @@ that no *.o files are allowed. Watch for a commit problem (hint: observe your st
         retval=True
     #clean up
     # delete the set_a working directory to clean
-    out = raw_input("DEBUG -- Press Enter key when you are ready for your work to be checked.")
     State.cd()
-    print "Koan 5 retval: " + str(retval)
+
     return retval
 
+@koan
+def koan_6(*args,**kwargs):
+    retval = False
+    print """In this koan we will work on moving about on the commit path.
+The 'rollback' directory has two files and five commits. Using the
+commands 'log','tags', and 'checkout' you will need to move the
+state of the branch to different points in the commit history."""
+
+    test,answers = test_vals(*args,**kwargs)
+    workset = 'rollback'
+
+    if test:
+        State.delete_workset(workset)
+
+    if not os.path.isdir(State.abs_path(workset)):
+        State.load_workset(workset)
+
+    dirp = State.abs_path("rollback")
+    print """In the other shell go to dir 'rollback' and try the 'git log' command. Notice
+the long hash strings in the log. These are the commit identifiers. They name your
+commits in git. You can refer to the commits using the first 6 characters of the
+hash string. Check it out now. (hint: git log --pretty=oneline)\n\n """
+
+    if not test:
+        out = pause()
+        print "\n"
+
+    print """I was working on two songs, one about a girl named mary, called 'mary'
+and one about a boat, called 'row'. I stepped away and my cat got on the
+computer, added to the songs and committed them. See if you can get them back
+to the pre-cat state.
+
+Use the 'checkout' command to modify the repo back to the pre-cat final commit."""
+
+    if test:
+        # use answers
+        pass
+    else:
+        out = pause()
+
+    # check that mary song has no meows in it.
+    State.cd(workset)
+    out = cmd("git status")
+    match = re.search("# HEAD detached at 0a1366f",out)
+    if match.group():
+        # next level
+        print "Yes! My songs are back. Kitty is foiled again.!\n"
+        print "\n\Notice that the log only has 3 entries now, not 5."
+        out = pause()
+        retval = True
+        print """But commit identifier hashes can be hard to remember. We can also use
+tags. Try the 'git tag' command. Then move the state to the second commit using
+the tag name as the commit identifier.\n """
+        out = pause()
+        out = cmd("git status")
+        match = re.search("HEAD is now at 8eb00f3",out)
+        if match.group():
+            print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
+            print "(hint - the last commit is tagged 'master')"
+            out = pause()
+            out = cmd("git status")
+            match = re.search("# On branch master",out)
+            if match.group():
+                print "Yes! All is restored. Complete!\n"
+                retval = True
+            else:
+                print "Not quite. Try again."
+
+
+
+        else:
+            print "Not quite. Try again."
+            
+    else:
+        #failed to move to right place
+        print "The songs are not quite right still. Try again."
+
+
+    return retval
 
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"
