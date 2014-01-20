@@ -52,7 +52,7 @@ class State:
     def abs_path(cls,dir=None):
         """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
 Returns path string."""
-        if dir == None:
+        if dir in [None,'']:
             out = cls.basedir
         else:
             out = os.path.abspath(dir)
@@ -275,19 +275,27 @@ def koan_3(*args,**kwargs):
     if test:
         out = answers.popleft()
     else:
-        out = raw_input("Now commit your changes with the 'git commit -a' command. Note that\nyou" +
-"are in your repo directory 'work'. Also, you will need to add a message to your commit. Enter when done.")
+        out = raw_input("Now commit your changes with the 'git commit -m' command.\n "+
+"Also, you will need to add a message to your commit. Enter when done.")
         if out == "\t":
-            out = "git commit -a -m 'x'"
+            out = "git commit -m 'x'"
             print out
     rv = cmd(out)
-    print rv
-    out = re.search("\[master \(root\-commit\)", rv )
+    State.cd('')
+    shutil.rmtree(State.abs_path('tmp'),ignore_errors=True)
+    dirp = State.abs_path("tmp")
+    out = cmd("git clone -l work " + dirp)
+    State.cd('tmp')
+    print "State.cwd = " + State.cwd
+    print "getcwd = " + os.getcwd()
     try:
-        if out.group():
-            ret_val = True
-    except AttributeError:
-        pass
+        fd = open('foo','r')
+        print  "opened dir"
+        ret_val = True
+    except IOError, eio:
+        print "IO Error " + eio.message()
+        pass # file not found.
+    #State.delete_workset('tmp')
     State.cd()
     return ret_val
 
@@ -481,10 +489,10 @@ the tag name as the commit identifier.\n """
             print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
             print "(hint - the last commit is tagged 'master')"
             out = pause()
-            out = cmd("git status")
-            print "git status - " + out
+            out = cmd("git log --pretty=oneline | head -1")
+            print "git - " + out
 
-            match = re.search("# On branch master",out)
+            match = re.search("e808d7",out)
             if match.group():
                 print "Yes! All is restored. Complete!\n"
                 retval = True
