@@ -293,7 +293,7 @@ def koan_3(*args,**kwargs):
         print  "opened dir"
         ret_val = True
     except IOError, eio:
-        print "IO Error " + eio.message()
+        print "IO Error " + str(eio)
         pass # file not found.
     #State.delete_workset('tmp')
     State.cd()
@@ -461,12 +461,13 @@ to the pre-cat state.
 Use the 'checkout' and commit hash identifiers  to modify the repo
 back to the pre-cat final commit."""
 
-    if test:
-        # use answers
-        pass
-    else:
+    if not test:
         out = pause()
 
+    if test or out == "\t":
+        State.cd('rollback')
+        out = cmd('git checkout 0a1366')
+        State.cd()
     # check that mary song has no meows in it.
     State.cd(workset)
     out = cmd("git status")
@@ -478,10 +479,18 @@ back to the pre-cat final commit."""
         print "\nNotice that the log only has 3 entries now, not 5."
         out = pause()
         retval = True
-        print """But commit identifier hashes can be hard to remember. We can also use
+        print """
+But commit identifier hashes can be hard to remember. We can also use
 tags. Try the 'git tag' command. Then move the state to the second commit using
 the tag name as the commit identifier.\n """
-        out = pause()
+        if not test:
+            out = pause()
+
+        if test or out == "\t":
+            out = cmd("git checkout v0.2")
+            State.cd()
+            State.cd('tmp')
+            print "base cwd : " + State.cwd
         out = cmd("git status")
         print out
         match = re.search("# HEAD detached at v0.2",out)
@@ -489,6 +498,11 @@ the tag name as the commit identifier.\n """
             print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
             print "(hint - the last commit is tagged 'master')"
             out = pause()
+            if out == "\t" or test:
+                State.cd(workset)
+                out = cmd('git checkout master')
+                State.cd('tmp')
+
             out = cmd("git log --pretty=oneline | head -1")
             print "git - " + out
 
@@ -498,18 +512,38 @@ the tag name as the commit identifier.\n """
                 retval = True
             else:
                 print "Not quite. Try again."
-
-
-
         else:
             print "Not quite. Try again."
-            
     else:
         #failed to move to right place
         print "The songs are not quite right still. Try again."
 
 
     return retval
+
+
+@koan
+def koan_7(*args,**kwargs):
+    """git clone, push, pull."""
+    test,answers = test_vals(*args,**kwargs)
+    print """Core operations: clone, push, pull."""
+    print """
+Now we will learn the core operations of git: clone, push, and pull. Clone creates
+a copy of the latest commited version of the repository. Push pushes your changes
+back to the master repository. Pull pulls in changes that have happened in the master
+repo.
+
+Start by using clone to make a copy of your the 'work' repo. Clone into a new repo
+called 'clone_work'."""
+
+    out = pause()
+
+
+
+
+
+    print "Exiting 7"
+    return True
 
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"
