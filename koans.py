@@ -52,6 +52,7 @@ class State:
     def abs_path(cls,dir=None):
         """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
 Returns path string."""
+        os.chdir(cls.basedir)
         if dir in [None,'']:
             out = cls.basedir
         else:
@@ -126,7 +127,7 @@ def sys_reset():
     work = State.abs_path("work/")
     cmd("rm -rf " + work)
     State.reset_counter()
-    for dir in ["set_a","tmp"]:
+    for dir in ["set_a","tmp","work","rollback","clone_work"]:
         try:
             cmd("rm -rf " + State.cd(dir))
         except (OSError,TypeError):
@@ -134,6 +135,26 @@ def sys_reset():
     # work directory is something to think about
     cmd("mkdir " + work)
     cmd("touch " + State.abs_path("work/.empty"))
+
+def check(loc,setup=[],test_str='', verbose=False):
+    """Check a result in location 'loc' (relative to State.basedir). Run shell commands
+    in setup array. Check for test string 'test_str'. Returns boolean."""
+
+    last = ""
+    retval = False
+    State.cd(loc)
+    for instruction in setup:
+        out = cmd(instruction)
+        last = out
+        if verbose:
+            print instruction
+            print out
+
+    match = re.search(test_str,last)
+    if not match == None and match.group():
+        retval = True
+    return retval
+
 
 def cmd(cmd,verbose=False):
     """Calls subprocess.check_output with 'shell=True' and stderr redirection. Returns
@@ -526,6 +547,9 @@ the tag name as the commit identifier.\n """
 def koan_7(*args,**kwargs):
     """git clone, push, pull."""
     test,answers = test_vals(*args,**kwargs)
+    State.delete_workset('rollback')
+    State.load_workset('rollback')
+    retval = False
     print """Core operations: clone, push, pull."""
     print """
 Now we will learn the core operations of git: clone, push, and pull. Clone creates
@@ -533,10 +557,45 @@ a copy of the latest commited version of the repository. Push pushes your change
 back to the master repository. Pull pulls in changes that have happened in the master
 repo.
 
-Start by using clone to make a copy of your the 'work' repo. Clone into a new repo
-called 'clone_work'."""
+Start by using clone to make a copy of your the 'rollback' repo. Clone into a new repo
+called 'clone_rollback'."""
+
+    State.cd('rollback')
+    out = cmd("git checkout HEAD")
+    out = cmd("git status")
+    print out
 
     out = pause()
+    if test or out == "\t":
+        State.cd()
+        out = cmd("git clone rollback clone_rollback")
+
+    ok = check('clone_rollback',['git status'],'# On branch master')
+    out = pause()
+
+    if ok:
+        print """
+Work repo cloned. Now cd to the clone_work directory and add a new file called
+''zipper' (using git add and git commit). """
+
+        out = pause()
+        if test or out =="\t":
+            State.cd('clone_rollback')
+            out = cmd("echo zipper file > zipper")
+            out = cmd("git add zipper")
+            out = cmd("git commit -m 'Added zipper file.'")
+
+
+            print """
+Now that you've added the 'zipper' file use 'git push' command to push your
+change to the master repo in './rollback'. """
+
+
+
+
+
+
+
 
 
 
