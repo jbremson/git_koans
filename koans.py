@@ -223,7 +223,9 @@ def koan_1(*args,**kwargs):
         cmd_ret = cmd(answers.popleft())
     else:
         dirp = State.abs_path("work")
-        out =  raw_input("Koan 1: In another shell, init a repository in the\n" + dirp + "\n directory. Press Enter when done.")
+        out =  raw_input("""
+Koan 1: In another shell, init a repository in {0}
+Press Enter when done.""".format(dirp))
         print out
         if out == "\t":
             State.cd(dirp)
@@ -255,17 +257,17 @@ def koan_2(*args,**kwargs):
     else:
         out = raw_input("Koan 2: Now create a file called 'foo' to the work repo. Press Enter when done.")
         if out == "\t":
+            State.cd("work")
             out = "touch foo"
-            print out
-        retval = cmd(out)
-        print retval
+        ret = cmd(out)
 
     if os.path.isfile(State.abs_path("foo")):
         if test:
             out = answers.popleft()
         else:
-            print """\n\nYou have now created what git calls an 'untracked file'. Next we
-will make it tracked by officially adding it to the repository."""
+            print """
+You have now created what git calls an 'untracked file'. Next we will make it
+tracked by officially adding it to the repository.\n\n"""
             out = raw_input("\n\n Add the file to git (hint: git add --help) and press Enter.")
         if out == "\t":
             out = "git add foo"
@@ -277,7 +279,8 @@ will make it tracked by officially adding it to the repository."""
         try:
             if out.group():
                 ret_val = True
-                print """The file has been added. It is now a 'tracked file.' The add command does
+                print """
+The file has been added. It is now a 'tracked file.' The add command does
 more than just add to the repo though, as we will see later."""
                 print "\n\nNext we will learn about basic commits.\n\n"
                 State.cd()
@@ -326,9 +329,11 @@ def koan_4(*args,**kwargs):
     test,answers=test_vals(*args,**kwargs)
     retval = False
 
-    print """\n\nThis koan is about the '.gitignore' file feature. Sometimes you have files
+    print """\n
+This koan is about the '.gitignore' file feature. Sometimes you have files
 you don't want git to ever track.\n\n.In your /work repo create a .gitignore
-file that does 1) ignores files called 'baz' and 2) ignores any files that match *.a ."""
+file that does 1) ignores files called 'baz' and 2) ignores any files that
+match *.a ."""
     State.cd("work")
     if not test:
         out = raw_input("Press Enter key when you are done.")
@@ -394,8 +399,11 @@ def koan_5(*args,**kwargs):
 
     if not os.path.isdir(State.abs_path(workset)):
         State.load_workset(workset)
-    print """Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
-that no *.o files are allowed. Watch for a commit problem (hint: observe your status.)"""
+    print """
+Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
+that no *.o files are allowed. Watch for a commit problem (hint: observe your
+status.)"""
+
 
     # wait for user input
 
@@ -450,10 +458,11 @@ that no *.o files are allowed. Watch for a commit problem (hint: observe your st
 @koan
 def koan_6(*args,**kwargs):
     retval = False
-    print """In this koan we will work on moving about on the commit path.
-The 'rollback' directory has two files and five commits. Using the
-commands 'log','tags', and 'checkout' you will need to move the
-state of the branch to different points in the commit history."""
+    print """
+In this koan we will work on moving about on the commit path. The 'rollback'
+directory has two files and five commits. Using the commands 'log','tags',
+and 'checkout' you will need to move the state of the branch to different
+points in the commit history."""
 
     test,answers = test_vals(*args,**kwargs)
     workset = 'rollback'
@@ -465,22 +474,24 @@ state of the branch to different points in the commit history."""
         State.load_workset(workset)
 
     dirp = State.abs_path("rollback")
-    print """In the other shell go to dir 'rollback' and try the 'git log' command. Notice
-the long hash strings in the log. These are the commit identifiers. They name your
-commits in git. You can refer to the commits using the first 6 characters of the
-hash string. Check it out now. (hint: git log --pretty=oneline)\n\n """
+    print """
+In the other shell go to dir 'rollback' and try the 'git log' command. Notice
+the long hash strings in the log. These are the commit identifiers. They name
+your commits in git. You can refer to the commits using the first 6 characters
+of the hash string. Check it out now. (hint: git log --pretty=oneline)\n\n """
 
     if not test:
         out = pause()
         print "\n"
 
-    print """I was working on two songs, one about a girl named mary, called 'mary'
-and one about a boat, called 'row'. I stepped away and my cat got on the
-computer and made some changes. See if you can get them back
-to the pre-cat state.
+    print """
 
-Use the 'checkout' and commit hash identifiers  to modify the repo
-back to the pre-cat final commit."""
+I was working on two songs, one about a girl named mary, called 'mary' and one
+about a boat, called 'row'. I stepped away and my cat got on the computer and
+made some changes. See if you can get them back to the pre-cat state.
+
+Use the 'checkout' and commit hash identifiers  to modify the repo back to the
+pre-cat final commit."""
 
     if not test:
         out = pause()
@@ -501,9 +512,9 @@ back to the pre-cat final commit."""
         out = pause()
         retval = True
         print """
-But commit identifier hashes can be hard to remember. We can also use
-tags. Try the 'git tag' command. Then move the state to the second commit using
-the tag name as the commit identifier.\n """
+But commit identifier hashes can be hard to remember. We can also use tags. Try
+the 'git tag' command. Then move the state to the second commit using the tag
+name as the commit identifier.\n """
         if not test:
             out = pause()
 
@@ -592,22 +603,15 @@ change to the master repo in './rollback'. """
 
 
 
-
-
-
-
-
-
-
-
-
     print "Exiting 7"
     return True
 
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"
-    print """\n\nThese koans cover the basic concepts from Pro Git by Scott Chacon (http://git-scm.com/book).
-See chapter 2 for assistance - http://git-scm.com/book/en/Git-Basics ."""
+    print """\n
+These koans cover the basic concepts from Pro Git by Scott Chacon
+(http://git-scm.com/book). See chapter 2 for assistance.
+http://git-scm.com/book/en/Git-Basics ."""
 
 
     if State.get_counter()==1 or raw_input("reset?")=="y":
