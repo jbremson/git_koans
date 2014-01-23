@@ -104,8 +104,6 @@ Returns path string."""
         except OSError:
             pass
         State.cd()
-        print "Making dir tmp in base dir"
-        out = pause()
         out = cmd("mkdir tmp")
 
     @classmethod
@@ -261,7 +259,8 @@ def koan_2(*args,**kwargs):
             out = "touch foo"
         ret = cmd(out)
 
-    if os.path.isfile(State.abs_path("foo")):
+    State.cd("work")
+    if os.path.isfile("foo"):
         if test:
             out = answers.popleft()
         else:
@@ -582,7 +581,6 @@ called 'clone_rollback'."""
         out = cmd("git clone rollback clone_rollback")
 
     ok = check('clone_rollback',['git status'],'# On branch master')
-    out = pause()
 
     if ok:
         print """
