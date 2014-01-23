@@ -125,7 +125,7 @@ def sys_reset():
     work = State.abs_path("work/")
     cmd("rm -rf " + work)
     State.reset_counter()
-    for dir in ["set_a","tmp","work","rollback","clone_work"]:
+    for dir in ["set_a","tmp","work","rollback","clone_work","clone_rollback"]:
         try:
             cmd("rm -rf " + State.cd(dir))
         except (OSError,TypeError):
@@ -150,6 +150,8 @@ def check(loc,setup=[],test_str='', verbose=False):
 
     match = re.search(test_str,last)
     if not match == None and match.group():
+        retval = True
+    if test_str == '' and last == '': # empty string is desired result case
         retval = True
     return retval
 
@@ -594,9 +596,11 @@ Work repo cloned. Now cd to the clone_work directory and add a new file called
             out = cmd("git add zipper")
             out = cmd("git commit -m 'Added zipper file.'")
 
+        ok = check('clone_rollback',['git checkout zipper'],'',verbose=True)
 
-            print """
-Now that you've added the 'zipper' file use 'git push' command to push your
+
+        print """
+Good. Now that you've added the 'zipper' file use 'git push' command to push your
 change to the master repo in './rollback'. """
 
 
