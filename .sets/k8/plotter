@@ -1,0 +1,10 @@
+# psuedo code project
+10	if os() == "windows":
+20		dat = open winfile('input.csv')
+25	if os() == "mac":
+26		dat = open mac_file('input.csv')	
+30	else:
+50 		dat = open file('input.csv')
+100	if dat not null:
+150       	dat = process_data(dat)
+200		plot dat
