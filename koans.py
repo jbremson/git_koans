@@ -656,7 +656,7 @@ http://git-scm.com/book/en/Git-Basics ."""
     koans = [k for k in dir() if 'koan_' in k]
 
     for koan in sorted(koans):
-        out = re.search("\d+$",koan)
+        out = re.search("\d(\.\d)?$",koan)
         
         if int(out.group(0)) < State.get_counter():
             continue
