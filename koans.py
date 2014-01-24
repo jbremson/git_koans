@@ -1,16 +1,20 @@
 #!python
 
 __author__ = 'joelbremson'
-__date__ = "1/13/14"
+__date__ = "1/23/14"
 
 """How to write a koan.
 
-1. Start the koan with the @koan decorator. This will print a header for you and keep track of the koan state.
-2. Name your koan 'koan_<int>' where <int> is the sequence number of your koan.
-3. Do your work in the koan and clean up so that cwd is in the right place when you exit.
-4. If the koan is passed return True, otherwise return False.
+1.  Start the koan with the @koan decorator. This will print a header for you
+    and keep track of the koan state.
+2.  Name your koan 'koan_<int>_<opt>' where <int> is the sequence number of
+    your koan and <opt> is an optional secondary identifier. For example,
+    koan_3, koan_3_1, koan_3_3, will appear in the order implied by 3, 3.1, 3.3.
+3.  Do your work in the koan and clean up so that cwd is in the right place
+    when you exit.
+4.  If the koan is passed return True, otherwise return False.
 
-To start fresh rm the .koan_state file in ./git_koans  .
+To start fresh rm the .koan_state file in ./git_koans.
 """
 
 import os
@@ -637,6 +641,20 @@ ent sort of workflow. We will cover that later."""
 
     return True
 
+@koan
+def koan_8(*args,**kwargs):
+    """Fetch and merge koan. Fetch changes from rollback to clone_rollback in
+and merge them for the file 'mary'."""
+    test,answers=test_vals(*args,**kwargs)
+    ok = check('rollback',['echo meow skljs dkfjsf sdfkljsd fkjs sdflkj lsdf >> mary',
+                           'git add mary', "git commit -m 'cat's changes to mary'"],'')
+    ok = check('clone_rollback',['echo whose fleece was white as snow >> mary',
+                                 'git add mary', "git commit -m 'my mary changes'"],'')
+
+
+
+    return True
+
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"
     print """\n
@@ -656,9 +674,9 @@ http://git-scm.com/book/en/Git-Basics ."""
     koans = [k for k in dir() if 'koan_' in k]
 
     for koan in sorted(koans):
-        out = re.search("\d(\.\d)?$",koan)
+        out = re.search("\d(_\d)?$",koan)
         
-        if int(out.group(0)) < State.get_counter():
+        if float(out.group(0).replace("_",".")) < State.get_counter():
             continue
         locals()[koan]()
 
