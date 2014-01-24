@@ -128,7 +128,9 @@ def sys_reset():
     for dir in ["set_a","tmp","work","rollback","clone_work","clone_rollback"]:
         try:
             cmd("rm -rf " + State.cd(dir))
-        except (OSError,TypeError):
+        except (OSError,TypeError) as e:
+            print "Did not rm -rf {0}".format(dir)
+            print "Exception msg: {0}".format(str(e))
             pass
     # work directory is something to think about
     cmd("mkdir " + work)
@@ -510,7 +512,8 @@ pre-cat final commit."""
         # next level
         print "Yes! My songs are back. Kitty is foiled again.!\n"
         print "\nNotice that the log only has 3 entries now, not 5."
-        out = pause()
+        if not test:
+            out = pause()
         retval = True
         print """
 But commit identifier hashes can be hard to remember. We can also use tags. Try
@@ -530,7 +533,8 @@ name as the commit identifier.\n """
         if not match == None and match.group():
             print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
             print "(hint - the last commit is tagged 'master')"
-            out = pause()
+            if not test:
+                out = pause()
             if out == "\t" or test:
                 State.cd(workset)
                 out = cmd('git checkout master')
@@ -573,11 +577,12 @@ Start by using clone to make a copy of your the 'rollback' repo. Clone into a ne
 called 'clone_rollback'."""
 
     State.cd('rollback')
-    out = cmd("git checkout HEAD")
+    out = cmd("git checkout head")
     out = cmd("git status")
     print out
 
-    out = pause()
+    if not test:
+        out = pause()
     if test or out == "\t":
         State.cd()
         out = cmd("git clone rollback clone_rollback")
@@ -589,7 +594,8 @@ called 'clone_rollback'."""
 Work repo cloned. Now cd to the clone_work directory and add a new file called
 ''zipper' (using git add and git commit). """
 
-        out = pause()
+        if not test:
+            out = pause()
         if test or out =="\t":
             State.cd('clone_rollback')
             out = cmd("echo zipper file > zipper")
@@ -603,9 +609,32 @@ Work repo cloned. Now cd to the clone_work directory and add a new file called
 Good. Now that you've added the 'zipper' file use 'git push' command to push your
 change to the master repo in './rollback'. """
 
+        State.cd("rollback")
+        out = cmd("git checkout head")
+
+        if not test:
+            out = pause()
+        if test or out =="\t":
+            State.cd("clone_rollback")
+            out = cmd("git push")
 
 
-    print "Exiting 7"
+        ok = check('rollback',['git checkout master','git checkout zipper'],'',True)
+
+        if not test:
+            out = pause()
+
+
+
+    print """
+
+Koan complete!
+
+Now you have seen the clone, push, pull workflow for git. This is a git approach
+you might use for working on your own repo, say on github. In more complex git
+workflows with multiple developers and branches you will probably use a differ-
+ent sort of workflow. We will cover that later."""
+
     return True
 
 if __name__ == "__main__":
