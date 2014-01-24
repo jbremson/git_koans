@@ -1,6 +1,8 @@
 # psuedo code project
 10	if os() == "windows":
 20		dat = open winfile('input.csv')
+25	if os() == "linux":
+30		dat = open linux_file('input.csv')
 25	if os() == "mac":
 26		dat = open mac_file('input.csv')	
 30	else:
@@ -8,3 +10,6 @@
 100	if dat not null:
 150       	dat = process_data(dat)
 200		plot dat
+220	else:
+		print "No data to process in input.csv"
+1000	print "Exiting."
