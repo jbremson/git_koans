@@ -94,14 +94,19 @@ Returns path string."""
         return cls.keep['counter']
 
     @classmethod
-    def load_workset(cls,workset):
-        """Creates a git directory for 'workset' and also a 'tmp' directory for inspection."""
-        source = cls.abs_path(".sets/" + workset)
-        target = cls.abs_path(workset)
-        shutil.copytree(source,target)
-        State.cd(workset)
-        out = cmd("mv .mit .git")
-        out = cmd("git init")
+    def load_workset(cls,workset,live_git=False):
+        """Creates a git directory for 'workset' and also a 'tmp' directory for inspection.
+    If live_git is True then an actual working .git is installed in the .sets/<workset> dir."""
+        if live_git:
+            # make this a live git dir with a .git init.
+            # then clone it target dir rather than copy and init.
+        else:
+            source = cls.abs_path(".sets/" + workset)
+            target = cls.abs_path(workset)
+            shutil.copytree(source,target)
+            State.cd(workset)
+            out = cmd("mv .mit .git")
+            out = cmd("git init")
 
         try:
             os.rmdir(cls.abs_path('tmp'))
@@ -114,7 +119,10 @@ Returns path string."""
     def delete_workset(cls,workset):
         """Deletes dir for 'workset' (git repo) and the tmp dir."""
         for loc in [workset,'tmp']:
-            shutil.rmtree(State.abs_path(loc),ignore_errors=True)
+            try:
+                shutil.rmtree(State.abs_path(loc))
+            except OSError,e:
+                pass
 
 
 
@@ -126,18 +134,18 @@ Returns path string."""
 def sys_reset():
     print ("Resetting koans to initial state...")
     # make this safer
-    work = State.abs_path("work/")
-    cmd("rm -rf " + work)
     State.reset_counter()
-    for dir in ["set_a","tmp","work","rollback","clone_work","clone_rollback"]:
+    # this should just kill all the worksets by looking in the .sets dir
+    for dir in ["set_a","tmp","work","rollback","clone_work","clone_rollback","k8"]:
         try:
-            cmd("rm -rf " + State.cd(dir))
+            State.delete_workset(dir)
         except (OSError,TypeError) as e:
             print "Did not rm -rf {0}".format(dir)
             print "Exception msg: {0}".format(str(e))
             pass
     # work directory is something to think about
-    cmd("mkdir " + work)
+    State.cd("")
+    cmd("mkdir work")
     cmd("touch " + State.abs_path("work/.empty"))
 
 def check(loc,setup=[],test_str='', verbose=False):
@@ -643,14 +651,21 @@ ent sort of workflow. We will cover that later."""
 
 @koan
 def koan_8(*args,**kwargs):
-    """Fetch and merge koan. Fetch changes from rollback to clone_rollback in
-and merge them for the file 'mary'."""
-    test,answers=test_vals(*args,**kwargs)
-    ok = check('rollback',['echo meow skljs dkfjsf sdfkljsd fkjs sdflkj lsdf >> mary',
-                           'git add mary', "git commit -m 'cat's changes to mary'"],'')
-    ok = check('clone_rollback',['echo whose fleece was white as snow >> mary',
-                                 'git add mary', "git commit -m 'my mary changes'"],'')
+    """Merge mac, linux, and windows branches together into a single master."""
 
+    test,answers=test_vals(*args,**kwargs)
+
+    State.load_workset("k8",live_git=True)
+    print """
+In this koan you have a repo with three branches: mac, windows, and linux.
+You must merge them into a single master branch. Using the gitk tool will
+help you visualize the branch structure. Git commands you will need are:
+checkout, merge, add, and commit. Maybe more.
+
+The objective is to get the psuedo code to handle the three platforms.
+"""
+    if not test:
+        out = pause()
 
 
     return True
