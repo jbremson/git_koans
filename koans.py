@@ -77,9 +77,15 @@ Returns path string."""
         cls.save_state()
 
     @classmethod
-    def reset_counter(cls):
-        cls.keep['counter'] = 1
+    def reset_counter(cls,inp=1):
+        cls.keep['counter'] = inp
         cls.save_state()
+
+    @classmethod
+    def set_counter(cls,inp):
+        """Set counter to int value arg."""
+        cls.reset_counter(int(inp))
+
 
     @classmethod
     def save_state(cls):
@@ -100,8 +106,23 @@ Returns path string."""
         if live_git:
             # make this a live git dir with a .git init.
             # then clone it target dir rather than copy and init.
+
+            dirp = os.path.join(".sets",workset)
+            abs = os.path.abspath(dirp)
+            os.chdir(abs)
+            gitdir = os.path.join(dirp,".git")
+            shutil.rmtree(gitdir,ignore_errors=True)
+            out = cmd("cp -r .mit .git; git init")
+            print "in live_git"
+            print out
+            shutil.rmtree(State.abs_path(workset+"_repo"),ignore_errors=True)
+            State.cd()
+
+            out = cmd("git clone {0} {1}_repo".format(os.path.join(".",".sets",workset), workset))
+            print out
+    
         else:
-            source = cls.abs_path(".sets/" + workset)
+            source = cls.abs_path(os.path.join(".sets",workset))
             target = cls.abs_path(workset)
             shutil.copytree(source,target)
             State.cd(workset)
@@ -262,7 +283,7 @@ def koan_2(*args,**kwargs):
     """Add a file."""
     test,answers = test_vals(*args,**kwargs)
     ret_val = False
-    final =  State.cwd.split("/")[-1]
+    final =  State.cwd.split(os.sep)[-1]
     if not final == "work":
         State.cd("work")
     if test:
@@ -663,10 +684,31 @@ help you visualize the branch structure. Git commands you will need are:
 checkout, merge, add, and commit. Maybe more.
 
 The objective is to get the psuedo code to handle the three platforms.
+
+
+Do this work in a separate window.
 """
     if not test:
         out = pause()
 
+    # user must first checkout windows, linux, mac branches from origin/master
+    # git checkout -b <branch name>
+
+    print """
+Try the gitk tool now. It is not a direct part of git. It is called
+directly from the command line as 'gitk'.
+"""
+
+    if not test:
+        out=pause()
+
+    print """
+Use the 'git branch -a' command to see what branches are in the repo.
+
+You need to checkout the windows, linux, and mac branches.
+
+Check them out with the 'git checkout -b <branch name>' command.
+"""
 
     return True
 
@@ -678,10 +720,14 @@ These koans cover the basic concepts from Pro Git by Scott Chacon
 http://git-scm.com/book/en/Git-Basics ."""
 
 
-    if State.get_counter()==1 or raw_input("reset?")=="y":
+    inp = raw_input("reset? [y,<koan number>] default (skip): ")
+    if State.get_counter()==1 or inp=="y":
         sys_reset()
     else:
-        print "\n\nContinuing from koan " + str(State.get_counter()) + "\n\n"
+        print "\n\nContinuing from koan " + str(State.get_counter()-1) + "\n\n"
+
+    State.set_counter(inp)
+
 
 
     # this should store state so user doesn't have to repeat with restart.
