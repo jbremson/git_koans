@@ -110,11 +110,13 @@ Returns path string."""
             dirp = os.path.join(".sets",workset)
             abs = os.path.abspath(dirp)
             os.chdir(abs)
-            gitdir = os.path.join(dirp,".git")
+            gitdir = os.path.join(abs,".git")
+            print "gitdir = " + gitdir
+            mitdir = os.path.join(abs,".mit")
+            print "mitdir = " + mitdir
             shutil.rmtree(gitdir,ignore_errors=True)
-            out = cmd("cp -r .mit .git; git init")
+            shutil.copytree(mitdir,gitdir)
             print "in live_git"
-            print out
             shutil.rmtree(State.abs_path(workset+"_repo"),ignore_errors=True)
             State.cd()
 
@@ -157,7 +159,7 @@ def sys_reset():
     # make this safer
     State.reset_counter()
     # this should just kill all the worksets by looking in the .sets dir
-    for dir in ["set_a","tmp","work","rollback","clone_work","clone_rollback","k8"]:
+    for dir in ["set_a","tmp","work","k8_repo","rollback","clone_work","clone_rollback","k8"]:
         try:
             State.delete_workset(dir)
         except (OSError,TypeError) as e:
@@ -674,6 +676,8 @@ ent sort of workflow. We will cover that later."""
 def koan_8(*args,**kwargs):
     """Merge mac, linux, and windows branches together into a single master."""
 
+    # 1/26/ the k8 repo is a mess. Need to simplify it and make it work right.
+    sys_reset()
     test,answers=test_vals(*args,**kwargs)
 
     State.load_workset("k8",live_git=True)
@@ -683,7 +687,8 @@ You must merge them into a single master branch. Using the gitk tool will
 help you visualize the branch structure. Git commands you will need are:
 checkout, merge, add, and commit. Maybe more.
 
-The objective is to get the psuedo code to handle the three platforms.
+The objective is to get to a single master repo that has working merged
+code for windows, mac, and linux..
 
 
 Do this work in a separate window.
@@ -695,20 +700,34 @@ Do this work in a separate window.
     # git checkout -b <branch name>
 
     print """
-Try the gitk tool now. It is not a direct part of git. It is called
-directly from the command line as 'gitk'.
+
+The first step is to clone the k8_repo. Clone it to a dir called 'k8'.
 """
 
     if not test:
         out=pause()
 
     print """
-Use the 'git branch -a' command to see what branches are in the repo.
+Now, cd into the k8 dir and inspect the repo. Try three commands:
 
-You need to checkout the windows, linux, and mac branches.
+git branch -a (show all branches in the repo)
+git branch ( show checked out branches  and active branch (*)
+gitk       (gitk is visual tool for inspecting a repo).
 
-Check them out with the 'git checkout -b <branch name>' command.
 """
+    if not test:
+        out=pause()
+    print """
+Now you must checkout the mac, windows, and linux branches into the repo.
+
+git checkout -b <branch name>
+
+"""
+
+    if not test:
+        out=pause()
+
+
 
     return True
 
@@ -724,7 +743,7 @@ http://git-scm.com/book/en/Git-Basics ."""
     if State.get_counter()==1 or inp=="y":
         sys_reset()
     else:
-        print "\n\nContinuing from koan " + str(State.get_counter()-1) + "\n\n"
+        print "\n\nContinuing from koan " + inp + "\n\n"
 
     State.set_counter(inp)
 
