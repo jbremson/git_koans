@@ -28,5 +28,4 @@ print out
 out = koans.koan_6('test',answers=[])
 print out
 out = koans.koan_7('test',answers=[])
-koans.sys_reset()
 out = koans.koan_8('test',answers=[])
