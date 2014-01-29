@@ -111,18 +111,14 @@ Returns path string."""
             abs = os.path.abspath(dirp)
             os.chdir(abs)
             gitdir = os.path.join(abs,".git")
-            print "gitdir = " + gitdir
             mitdir = os.path.join(abs,".mit")
-            print "mitdir = " + mitdir
             shutil.rmtree(gitdir,ignore_errors=True)
             shutil.copytree(mitdir,gitdir)
-            print "in live_git"
             shutil.rmtree(State.abs_path(workset),ignore_errors=True)
             State.cd()
 
             out = cmd("git clone {0} {1}".format(os.path.join(".",".sets",workset), workset))
-            print out
-    
+
         else:
             source = cls.abs_path(os.path.join(".sets",workset))
             target = cls.abs_path(workset)
@@ -309,7 +305,6 @@ tracked by officially adding it to the repository.\n\n"""
             out = raw_input("\n\n Add the file to git (hint: git add --help) and press Enter.")
         if out == "\t":
             out = "git add foo"
-            print out
         ret = cmd(out)
         git_status = cmd("git status")
         out = re.search("new file:\s+foo",git_status)
@@ -341,18 +336,14 @@ def koan_3(*args,**kwargs):
 "Also, you will need to add a message to your commit. Enter when done.")
         if out == "\t":
             out = "git commit -m 'x'"
-            print out
     rv = cmd(out)
     State.cd('')
     shutil.rmtree(State.abs_path('tmp'),ignore_errors=True)
     dirp = State.abs_path("tmp")
     out = cmd("git clone -l work " + dirp)
     State.cd('tmp')
-    print "State.cwd = " + State.cwd
-    print "getcwd = " + os.getcwd()
     try:
         fd = open('foo','r')
-        print  "opened dir"
         ret_val = True
     except IOError, eio:
         print "IO Error " + str(eio)
@@ -383,12 +374,10 @@ match *.a ."""
 
     out = cmd("git add baz" )
     match1 = re.search(".*ignored.*baz",out)
-    print out
 
 
     out = cmd("git add dfsdf.a" )
     match2 = re.search(".*ignored.*dfsdf.a",out)
-    print out
     try:
         if match1.group():
             print "\n\nFile 'baz' ignored."
@@ -793,12 +782,29 @@ log. That's it!
 if __name__ == "__main__":
     print "Welcome to git-koans...\n"
     print """\n
-These koans cover the basic concepts from Pro Git by Scott Chacon
+
+Presented here are koans, or puzzles, to assist in the learning of git.
+
+To run these you will need python and git installed.
+
+Run the koans in this shell and do the exercises in another shell.
+
+These koans cover basic concepts from Pro Git by Scott Chacon
 (http://git-scm.com/book). See chapter 2 for assistance.
-http://git-scm.com/book/en/Git-Basics ."""
+http://git-scm.com/book/en/Git-Basics .
+"""
 
+    instr="""
+Some usage instructions
 
-    inp = raw_input("reset? [y,<koan number>] default (skip): ")
+1. A task can be skipped by entering a tab at the prompt (debug feature).
+2. The system should remember which koan you left off on (although not
+   where you left off mid-koan.).
+3. To reset the system (clean directories / reset state enter a 'y' the
+   prompt. To jump to a particular koan enter its number >"
+
+"""
+    inp = raw_input(instr)
     if State.get_counter()==1 or inp=="y":
         sys_reset()
     else:
