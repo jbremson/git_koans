@@ -426,13 +426,39 @@ def koan_5(*args,**kwargs):
 
 
     if not os.path.isdir(State.abs_path(workset)):
-        State.load_workset(workset)
+        State.load_workset(workset,live_git=True)
     print """
-Create files called 'a1','b1', and 'c1' in the /set_a directory. Make sure
-that no *.o files are allowed. Watch for a commit problem (hint: observe your
-status.)"""
 
+There are some files that you do not want git to track, object files for
+example. The '.gitignore' file tells git which files to ignore.
 
+Here you will edit the .gitignore file to the meet the koan objectives.
+There are two objectives:
+
+1) Accept files with names that do not end with '.o'.
+2) Reject files with names that end with '.o'.
+
+Begin with the first objective by adding and committing the files 'a1','b1' and 'c1'
+to the repo. Use the 'set_a' directory. Don't force any commits.
+
+Try it first without editing the .gitignore file. 
+"""
+
+    if not test:
+        out = pause()
+    print """
+The file 'b1' should have been rejected. Now edit the .gitignore file and
+remove the line with b1 on it. You can verify it by trying to checkout
+the file with 'git checkout b1'. 
+
+Hint: Don't forget to add b1.
+"""
+    if not test:
+        out = pause()
+    print """
+Now add an entry to ignore files with names ending with .o. (hint: *.o).
+
+"""
     # wait for user input
 
     if test:
@@ -442,7 +468,7 @@ status.)"""
             out = cmd(item)
         State.cd()
     else:
-        out = raw_input("Press Enter key when you are ready for your work to be checked.")
+        out = pause()
         if out == "\t": # debugging hack - remove this later
             answers=["echo '*.o' > .gitignore","git add a1 b1 c1 .gitignore","git commit -m 'test commit'"]
             State.cd(workset)
