@@ -117,10 +117,10 @@ Returns path string."""
             shutil.rmtree(gitdir,ignore_errors=True)
             shutil.copytree(mitdir,gitdir)
             print "in live_git"
-            shutil.rmtree(State.abs_path(workset+"_repo"),ignore_errors=True)
+            shutil.rmtree(State.abs_path(workset),ignore_errors=True)
             State.cd()
 
-            out = cmd("git clone {0} {1}_repo".format(os.path.join(".",".sets",workset), workset))
+            out = cmd("git clone {0} {1}".format(os.path.join(".",".sets",workset), workset))
             print out
     
         else:
@@ -678,34 +678,26 @@ def koan_8(*args,**kwargs):
 
     # 1/26/ the k8 repo is a mess. Need to simplify it and make it work right.
     sys_reset()
+    workset='k8'
     test,answers=test_vals(*args,**kwargs)
 
-    State.load_workset("k8",live_git=True)
+    State.load_workset(workset,live_git=True)
+    State.cd(workset)
+
+    out = cmd("git checkout -b master remotes/origin/master")
     print """
-In this koan you have a repo with three branches: mac, windows, and linux.
-You must merge them into a single master branch. Using the gitk tool will
-help you visualize the branch structure. Git commands you will need are:
-checkout, merge, add, and commit. Maybe more.
+In git, when you want to start on a new code fork, while leaving the other
+changes intact, you create a branch. After you are happy with your changes
+you may bring the branched code back into the master repo line.
 
-The objective is to get to a single master repo that has working merged
-code for windows, mac, and linux..
+This koan is a repo that has already been branched and must have its changes
+integrated.
 
-
-Do this work in a separate window.
+The workset is in the k8 directory. Open that in another shell now.
 """
     if not test:
         out = pause()
 
-    # user must first checkout windows, linux, mac branches from origin/master
-    # git checkout -b <branch name>
-
-    print """
-
-The first step is to clone the k8_repo. Clone it to a dir called 'k8'.
-"""
-
-    if not test:
-        out=pause()
 
     print """
 Now, cd into the k8 dir and inspect the repo. Try three commands:
@@ -718,14 +710,81 @@ gitk       (gitk is visual tool for inspecting a repo).
     if not test:
         out=pause()
     print """
-Now you must checkout the mac, windows, and linux branches into the repo.
+You should be on the master branch ('git branch' to check). You  should see
+two files: code and README.
 
-git checkout -b <branch name>
+Read the branch log ('git log') and check its status ('git status').
+
+Now checkout the 'fixup' branch with 'git checkout fixup'.
+
+Inspect the directory. The README file is not part of the fixup branch. It
+should be gone.
+
+Read the branch log ('git log') and check its status ('git status'). Note that
+it is different than for the master branch.
 
 """
 
     if not test:
         out=pause()
+    print """
+Make a change to the 'code' file (doesn't matter what it is). Stage the changes
+with 'git add' and commit them with 'git commit'.
+"""
+
+    if not test:
+        out=pause()
+    print """
+Now switch back to the master branch ('git checkout ...') . Inspect the 'code'
+file one last time to verify that it is different than the one in the 'fixup'
+branch.
+"""
+
+    if not test:
+        out=pause()
+    print """
+Now we are going to use the 'rebase' command to integrate the fixup changes
+into master. The command to use is: git rebase fixup.
+
+Depending on what changes you made to the files git will either do a simple
+'fast forward' merge, which means that master had not changed since the
+fixup branch was made, or it will ask you to merge the files. To do this
+you will have to open 'code' in and edit the changes (get rid of the git
+insertions e.g. >>>>>>, in the process), and then do 'git rebase --continue'.
+
+"""
+    if not test:
+        out = pause()
+    print """
+Now let's get rid of the local fixup branch because we don't need it
+anymore. Use 'git branch -D fixup', which tells git to delete the branch."""
+
+    if not test:
+        out = pause()
+    print """
+Another thing the rebase command is good for is fixing up the commit log.
+
+Frequent commits are a good thing in local repos, but checking in a bunch
+of tiny commits into the a master branch is generally not a good idea.
+
+Git allows you to edit your commit record with 'git rebase -i <commit hash>'.
+
+Now, using the log (git log) choose the commit 4 steps back from the final
+one ('git rebase -i a32df3' for example). You will then be met with a dialog
+asking you to edit the commit record. Leave the first line as 'pick' and
+change the others to 'squash'.
+
+You will now have a chance to reword the commit log for your edited commit.
+
+"""
+
+    if not test:
+        out = pause()
+    print """
+
+Now check the log again. You should see the changes you made reflected in the
+log. That's it!
+"""
 
 
 

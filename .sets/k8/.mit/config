@@ -5,9 +5,3 @@
 	logallrefupdates = true
 	ignorecase = true
 	precomposeunicode = false
-[remote "origin"]
-	url = /Users/joelbremson/code/git_koans/.sets/../../../tmp/k8
-	fetch = +refs/heads/*:refs/remotes/origin/*
-[branch "mac"]
-	remote = origin
-	merge = refs/heads/mac

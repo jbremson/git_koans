@@ -1,1 +1,8 @@
-0000000000000000000000000000000000000000 ab64c72fb7e91f052502f3d0ab295061112f33a0 Joel Bremson <joel3000@gmail.com> 1390590020 -0800	clone: from /Users/joelbremson/code/git_koans/.sets/../../../tmp/k8
+0000000000000000000000000000000000000000 b0419660ea8e168b2aaf19ca99579b948b2e479a Joel Bremson <joel3000@gmail.com> 1390949786 -0800	commit (initial): Added code file.
+b0419660ea8e168b2aaf19ca99579b948b2e479a 07520cd0ae3a793bc2dd79f15646968be407b0cf Joel Bremson <joel3000@gmail.com> 1390949912 -0800	commit: Caught file exists issue.
+07520cd0ae3a793bc2dd79f15646968be407b0cf 07520cd0ae3a793bc2dd79f15646968be407b0cf Joel Bremson <joel3000@gmail.com> 1390949936 -0800	checkout: moving from master to fixup
+07520cd0ae3a793bc2dd79f15646968be407b0cf 79e17700c0e9eb2a3f9f8d1cd699487e60099a0b Joel Bremson <joel3000@gmail.com> 1390950045 -0800	commit: Fixups to code.
+79e17700c0e9eb2a3f9f8d1cd699487e60099a0b 07520cd0ae3a793bc2dd79f15646968be407b0cf Joel Bremson <joel3000@gmail.com> 1390950061 -0800	checkout: moving from fixup to master
+07520cd0ae3a793bc2dd79f15646968be407b0cf 3b71b9f953a9a0064eb971c656b7d361214bdb78 Joel Bremson <joel3000@gmail.com> 1390950094 -0800	commit: Added README.
+3b71b9f953a9a0064eb971c656b7d361214bdb78 79e17700c0e9eb2a3f9f8d1cd699487e60099a0b Joel Bremson <joel3000@gmail.com> 1390950119 -0800	checkout: moving from master to fixup
+79e17700c0e9eb2a3f9f8d1cd699487e60099a0b 2ab4422d55c3d3eef49ef57c2a4a762df2947039 Joel Bremson <joel3000@gmail.com> 1390950159 -0800	commit: Added exit line.
