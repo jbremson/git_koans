@@ -1,4 +1,4 @@
-#!python
+#python 2.6 / 2.7
 
 __author__ = 'joelbremson'
 __date__ = "1/23/14"
@@ -22,8 +22,9 @@ import pickle
 import subprocess
 import re
 from collections import deque
-import distutils.dir_util
 import shutil
+import getopt
+import sys
 
 #Test file for git koans
 
@@ -779,7 +780,38 @@ log. That's it!
 
     return True
 
+
+def usage():
+    print """
+
+Command line arguments:
+
+-h          print help message
+-r          reset system
+-k <number> jump to koan <number>
+"""
+
 if __name__ == "__main__":
+
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],"hrk:d",["reset","koan="])
+    except getopt.GetoptError:
+        usage()
+        sys.exit(2)
+
+    counter = 1
+    for opt,arg in opts:
+        if opt in ("-h,--help"):
+            usage()
+            sys.exit(0)
+        if opt in ("-r, --reset"):
+            print "Resetting System..."
+            sys_reset()
+        if opt in ("-k,--koan"):
+            counter = arg
+            print "Starting at koan " + str(arg)
+
+    State.set_counter(counter)
     print "Welcome to git-koans...\n"
     print """\n
 
@@ -800,17 +832,7 @@ Some usage instructions
 1. A task can be skipped by entering a tab at the prompt (debug feature).
 2. The system should remember which koan you left off on (although not
    where you left off mid-koan.).
-3. To reset the system (clean directories / reset state enter a 'y' the
-   prompt. To jump to a particular koan enter its number >"
-
 """
-    inp = raw_input(instr)
-    if State.get_counter()==1 or inp=="y":
-        sys_reset()
-    else:
-        print "\n\nContinuing from koan " + inp + "\n\n"
-
-    State.set_counter(inp)
 
 
 
