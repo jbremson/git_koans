@@ -401,9 +401,97 @@ match *.a ."""
     return retval
 
 @koan
+def koan_4_9(*args,**kwargs):
+    """This koan is about using the git config features. Set name, email, aliases, ???"""
+
+    test,answers = test_vals(*args,**kwargs)
+    retval = False
+    workset = "rollback"
+    State.load_workset(workset)
+
+
+    print """
+Git is managed with the 'config' command. Your git installation should have
+your name and email address already set. Let's check now.
+
+To check your name setting (in another shell):
+
+git config --get user.name
+
+"""
+    if not test:
+        out = pause()
+    print """
+
+To change or add your name:
+
+git config --global --add user.name 'Your Name'
+
+"""
+    if not test:
+            out = pause()
+    print """
+There are three layers to the git config system: system, global, and local.
+The system layer applies to all users. It is usually managed by a system admin-
+-istrator. Leave it alone unless you know what you're doing.Git will, by de-
+-fault, choose the value for a configuration variable first in local, next in
+global, and finally in system. This allows a great degree of flexibility in
+how the system is configured.
+
+We will now go through a demonstration of how these layers work.
+
+Type the following lines:
+git config --local -add user.name "local user level"
+git config --global -add user.name "system user level"
+"""
+    if not test:
+        out = pause()
+    print """
+Now let's access the values.
+
+Try:
+
+git config --get user.name
+git config --local --get user.name
+
+    """
+    if not test:
+        out = pause()
+    print """
+
+Notice that your default user.name with --get is "local user level,"
+and that you can also specify that you want the local value.
+
+You can see this value written in the file .git/config .
+
+Now we will unset the local user.name:
+
+git config --local --unset user.name
+"""
+
+    if not test:
+        out = pause()
+    print """"
+
+Next try,
+git config --get user.name
+git config --global user.name
+
+Notice that they are the same.
+
+The global config variables are written to the ~/.gitconfig file."""
+
+    if not test:
+        out = pause()
+    print """
+That's all.
+"""
+    retval = True
+    return retval
+
+@koan
 def koan_5(*args,**kwargs):
-    """This koan is a small puzzle in which the user is asked to figure out which file has been
-        modified since staging. The answer can be found with 'status'."""
+    """This koan is a small puzzle in which the user is asked to figure out which file has been modified since staging. The answer can be found with 'status'."""
 
     test,answers = test_vals(*args,**kwargs)
     answers = list(answers)
