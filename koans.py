@@ -17,247 +17,24 @@ __date__ = "1/23/14"
 To start fresh rm the .koan_state file in ./git_koans.
 """
 
-import os
-import pickle
-import subprocess
-import re
-from collections import deque
-import shutil
 import getopt
 import sys
+from koan_support import *
 
 #Test file for git koans
 
-class State:
-    """Set up koan system. Check for prior use so user can continue without
-    restart. This will only work if the user hasn't altered the archive state."""
-
-    keep = {'counter':1}
-    basedir = os.path.abspath("")
-    cwd = basedir
-
-
-    try:
-
-        target = os.path.abspath(".koans_state")
-        f = open(target,"r")
-        inval = pickle.load(f)
-        keep['counter'] = inval['counter']
-
-    except (AttributeError,IOError):
-        # no prior state to return to.
-        print "In exception of __init__"
-
-        f = open(target,"w")
-        pickle.dump(keep,f)
-        f.close()
-
-
-    @classmethod
-    def abs_path(cls,dir=None):
-        """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
-Returns path string."""
-        os.chdir(cls.basedir)
-        if dir in [None,'']:
-            out = cls.basedir
-        else:
-            out = os.path.abspath(dir)
-        return out
-
-    @classmethod
-    def cd(cls,dir=None):
-        """Change dir to 'dir', relative to the koans home dir. If dir is left blank
-        , cd to git_koans home dir."""
-        target = cls.abs_path(dir)
-        cls.cwd = target
-        os.chdir(target)
-
-    @classmethod
-    def inc_counter(cls):
-        cls.keep['counter'] += 1
-        cls.save_state()
-
-    @classmethod
-    def reset_counter(cls,inp=1):
-        cls.keep['counter'] = inp
-        cls.save_state()
-
-    @classmethod
-    def set_counter(cls,inp):
-        """Set counter to int value arg."""
-        cls.reset_counter(int(inp))
-
-
-    @classmethod
-    def save_state(cls):
-        target = cls.abs_path(".koans_state")
-        f = open(target,"w")
-        pickle.dump(cls.keep,f)
-        f.close()
-
-    @classmethod
-    def get_counter(cls):
-        """Returns the value of counter."""
-        return cls.keep['counter']
-
-    @classmethod
-    def load_workset(cls,workset,live_git=False):
-        """Creates a git directory for 'workset' and also a 'tmp' directory for inspection.
-    If live_git is True then an actual working .git is installed in the .sets/<workset> dir."""
-        if live_git:
-            # make this a live git dir with a .git init.
-            # then clone it target dir rather than copy and init.
-
-            dirp = os.path.join(".sets",workset)
-            abs = os.path.abspath(dirp)
-            os.chdir(abs)
-            gitdir = os.path.join(abs,".git")
-            mitdir = os.path.join(abs,".mit")
-            shutil.rmtree(gitdir,ignore_errors=True)
-            shutil.copytree(mitdir,gitdir)
-            shutil.rmtree(State.abs_path(workset),ignore_errors=True)
-            State.cd()
-
-            out = cmd("git clone {0} {1}".format(os.path.join(".",".sets",workset), workset))
-
-        else:
-            source = cls.abs_path(os.path.join(".sets",workset))
-            target = cls.abs_path(workset)
-            shutil.copytree(source,target)
-            State.cd(workset)
-            out = cmd("mv .mit .git")
-            out = cmd("git init")
-
-        try:
-            os.rmdir(cls.abs_path('tmp'))
-        except OSError:
-            pass
-        State.cd()
-        out = cmd("mkdir tmp")
-
-    @classmethod
-    def delete_workset(cls,workset):
-        """Deletes dir for 'workset' (git repo) and the tmp dir."""
-        for loc in [workset,'tmp']:
-            try:
-                shutil.rmtree(State.abs_path(loc))
-            except OSError,e:
-                pass
-
-
-
-
-
-
-
-
-def sys_reset():
-    print ("Resetting koans to initial state...")
-    # make this safer
-    State.reset_counter()
-    # this should just kill all the worksets by looking in the .sets dir
-    for dir in ["set_a","tmp","work","k8_repo","rollback","clone_work","clone_rollback","k8"]:
-        try:
-            State.delete_workset(dir)
-        except (OSError,TypeError) as e:
-            print "Did not rm -rf {0}".format(dir)
-            print "Exception msg: {0}".format(str(e))
-            pass
-    # work directory is something to think about
-    State.cd("")
-    cmd("mkdir work")
-    cmd("touch " + State.abs_path("work/.empty"))
-
-def check(loc,setup=[],test_str='', verbose=False):
-    """Check a result in location 'loc' (relative to State.basedir). Run shell commands
-    in setup array. Check for test string 'test_str'. Returns boolean."""
-
-    last = ""
-    retval = False
-    State.cd(loc)
-    for instruction in setup:
-        out = cmd(instruction)
-        last = out
-        if verbose:
-            print instruction
-            print out
-
-    match = re.search(test_str,last)
-    if not match == None and match.group():
-        retval = True
-    if test_str == '' and last == '': # empty string is desired result case
-        retval = True
-    return retval
-
-
-def cmd(cmd,verbose=False):
-    """Calls subprocess.check_output with 'shell=True' and stderr redirection. Returns
-    return val from subprocess. 'verbose' flag is a boolean. Set to true for debugging info. Short cut."""
-    proc = subprocess.Popen([cmd],stdout=subprocess.PIPE,stderr=subprocess.STDOUT, shell=True);
-    out = ""
-    while True:
-        line = proc.stdout.readline()
-        if verbose:
-            print line
-        if line != '':
-            out += " " + line.rstrip()
-        else:
-            break
-    return out
-    #return subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=False);
-
-def koan(fxn):
-    """Prints koan header and increments state counter (given the koan is passed)."""
-    def new_fxn(*args,**kwargs):
-        header = kwargs.get('header',True)
-        test,answers = test_vals(*args,**kwargs)
-        if header:
-            print "\n\n********  Koan " + str(State.get_counter()) + "  ********\n\n"
-        success = fxn(*args,**kwargs)
-        if success: # success
-            print "\n\nEnlightenment Achieved!"
-            State.inc_counter()
-        else: # failed
-            print ("\n\nThrough failure learning is achieved. Try it again.\n\n")
-            if not test:
-                # this runs the caller fxn !!!
-                globals()[fxn.__name__](header=False)
-        return success
-    return new_fxn
-
-def test_vals(*args, **kwargs):
-    """Return vals in args and kwargs used for testing. Returns <bool test>,<list answers>."""
-    test = 'test' in args
-    answers = deque(kwargs.get('answers',[]))
-    return test, answers
-
-def git_set_tree(repo):
-     #git --git-dir=/Users/joelbremson/code/git_koans/.git --work-tree=./git_koans/ status "
-    """Set the working repo to 'repo'. This is assumed to sit in the dir under /git_koans. Always.
-
-This is required because there are a lot of git repos potentially floating about in the workspace."""
-    target = State.abs_path(repo)
-    out = cmd("git config --git_dir " + target)
-    print out
-
-
-def pause():
-    """Prints 'Press 'Enter' when ready' and takes an input. Returns input string."""
-    val = raw_input("Press 'Enter' when ready.")
-    return val
-    
 
 @koan
-def koan_1(*args,**kwargs):
+def koan_1(*args, **kwargs):
     """Init the first repo."""
     retval = False
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     State.cd()
     if test:
         cmd_ret = cmd(answers.popleft())
     else:
         dirp = State.abs_path("work")
-        out =  raw_input("""
+        out = raw_input("""
 Koan 1: In another shell, init a repository in {0}
 Press Enter when done.""".format(dirp))
         print out
@@ -270,19 +47,20 @@ Press Enter when done.""".format(dirp))
 
     # check to see if there is a .git dir in work...
 
-    if(os.path.isdir(State.abs_path("work/.git"))):
+    if (os.path.isdir(State.abs_path("work/.git"))):
         State.cd("work")
-        out = cmd("touch .gitconfig") # make sure git commands run in this dir point to this git repo
+        out = cmd("touch .gitconfig")  # make sure git commands run in this dir point to this git repo
         retval = True
         State.cd()
     return retval
 
+
 @koan
-def koan_2(*args,**kwargs):
+def koan_2(*args, **kwargs):
     """Add a file."""
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     ret_val = False
-    final =  State.cwd.split(os.sep)[-1]
+    final = State.cwd.split(os.sep)[-1]
     if not final == "work":
         State.cd("work")
     if test:
@@ -308,7 +86,7 @@ tracked by officially adding it to the repository.\n\n"""
             out = "git add foo"
         ret = cmd(out)
         git_status = cmd("git status")
-        out = re.search("new file:\s+foo",git_status)
+        out = re.search("new file:\s+foo", git_status)
 
         try:
             if out.group():
@@ -323,40 +101,42 @@ more than just add to the repo though, as we will see later."""
             pass
     return ret_val
 
+
 @koan
-def koan_3(*args,**kwargs):
+def koan_3(*args, **kwargs):
     """Commit file."""
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     State.cd()
     ret_val = False
     State.cd("work")
     if test:
         out = answers.popleft()
     else:
-        out = raw_input("Now commit your changes with the 'git commit -m' command.\n "+
-"Also, you will need to add a message to your commit. Enter when done.")
+        out = raw_input("Now commit your changes with the 'git commit -m' command.\n " +
+                        "Also, you will need to add a message to your commit. Enter when done.")
         if out == "\t":
             out = "git commit -m 'x'"
     rv = cmd(out)
     State.cd('')
-    shutil.rmtree(State.abs_path('tmp'),ignore_errors=True)
+    shutil.rmtree(State.abs_path('tmp'), ignore_errors=True)
     dirp = State.abs_path("tmp")
     out = cmd("git clone -l work " + dirp)
     State.cd('tmp')
     try:
-        fd = open('foo','r')
+        fd = open('foo', 'r')
         ret_val = True
     except IOError, eio:
         print "IO Error " + str(eio)
-        pass # file not found.
+        pass  # file not found.
     #State.delete_workset('tmp')
     State.cd()
     return ret_val
 
+
 @koan
-def koan_4(*args,**kwargs):
+def koan_4(*args, **kwargs):
     """.gitignore koan."""
-    test,answers=test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     retval = False
 
     print """\n
@@ -373,12 +153,11 @@ match *.a ."""
     out = cmd("echo 'text' > baz")
     out = cmd("echo 'text' > dfsdf.a")
 
-    out = cmd("git add baz" )
-    match1 = re.search(".*ignored.*baz",out)
+    out = cmd("git add baz")
+    match1 = re.search(".*ignored.*baz", out)
 
-
-    out = cmd("git add dfsdf.a" )
-    match2 = re.search(".*ignored.*dfsdf.a",out)
+    out = cmd("git add dfsdf.a")
+    match2 = re.search(".*ignored.*dfsdf.a", out)
     try:
         if match1.group():
             print "\n\nFile 'baz' ignored."
@@ -397,18 +176,18 @@ match *.a ."""
         print out
         pass
 
-    State.cd() # return to base working dir
+    State.cd()  # return to base working dir
     return retval
 
+
 @koan
-def koan_4_9(*args,**kwargs):
+def koan_4_9(*args, **kwargs):
     """This koan is about using the git config features. Set name, email, aliases, ???"""
 
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     retval = False
     workset = "rollback"
     State.load_workset(workset)
-
 
     print """
 Git is managed with the 'config' command. Your git installation should have
@@ -429,7 +208,7 @@ git config --global --add user.name 'Your Name'
 
 """
     if not test:
-            out = pause()
+        out = pause()
     print """
 There are three layers to the git config system: system, global, and local.
 The system layer applies to all users. It is usually managed by a system admin-
@@ -489,14 +268,14 @@ That's all.
     retval = True
     return retval
 
+
 @koan
-def koan_5(*args,**kwargs):
+def koan_5(*args, **kwargs):
     """This koan is a small puzzle in which the user is asked to figure out which file has been modified since staging. The answer can be found with 'status'."""
 
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     answers = list(answers)
     workset = "set_a"
-
 
     retval = False
 
@@ -512,9 +291,8 @@ def koan_5(*args,**kwargs):
     if test:
         State.delete_workset(workset)
 
-
     if not os.path.isdir(State.abs_path(workset)):
-        State.load_workset(workset,live_git=True)
+        State.load_workset(workset, live_git=True)
     print """
 
 There are some files that you do not want git to track, object files for
@@ -557,14 +335,14 @@ Now add an entry to ignore files with names ending with .o. (hint: *.o).
         State.cd()
     else:
         out = pause()
-        if out == "\t": # debugging hack - remove this later
-            answers=["echo '*.o' > .gitignore","git add a1 b1 c1 .gitignore","git commit -m 'test commit'"]
+        if out == "\t":  # debugging hack - remove this later
+            answers = ["echo '*.o' > .gitignore", "git add a1 b1 c1 .gitignore", "git commit -m 'test commit'"]
             State.cd(workset)
             for item in answers:
                 print item
                 out = cmd(item)
             State.cd()
-        # run code to pass test.
+            # run code to pass test.
 
     # test - clone the dir after the user commits. Should find
     # a1, b1, c1 with no d1.o
@@ -573,10 +351,10 @@ Now add an entry to ignore files with names ending with .o. (hint: *.o).
     State.cd()
     out = cmd("rm -rf " + State.abs_path("tmp"))
     print "rm -rf tmp " + out
-    out = cmd("git clone -l "+ workset + " " + State.abs_path("tmp"))
+    out = cmd("git clone -l " + workset + " " + State.abs_path("tmp"))
     add_problem = False
-    for elem in ['a1','b1','c1']:
-        if not os.path.isfile(State.abs_path("tmp/"+elem)):
+    for elem in ['a1', 'b1', 'c1']:
+        if not os.path.isfile(State.abs_path("tmp/" + elem)):
             print "Problem: file " + elem + " not found."
             add_problem = True
 
@@ -584,21 +362,22 @@ Now add an entry to ignore files with names ending with .o. (hint: *.o).
     cmd("touch d1.o")
     out = cmd("git add d1.o")
     o_problem = False
-    if out == None: # if out is empty than then the add was allowed.
+    if out == None:  # if out is empty than then the add was allowed.
         o_problem = True  # since the add was allowed signal a problem
     else:
         print out + "**\n\n"
 
     if not o_problem and not add_problem:
-        retval=True
+        retval = True
     #clean up
     # delete the set_a working directory to clean
     State.cd()
 
     return retval
 
+
 @koan
-def koan_6(*args,**kwargs):
+def koan_6(*args, **kwargs):
     retval = False
     print """
 In this koan we will work on moving about on the commit path. The 'rollback'
@@ -606,7 +385,7 @@ directory has two files and five commits. Using the commands 'log','tags',
 and 'checkout' you will need to move the state of the branch to different
 points in the commit history."""
 
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     workset = 'rollback'
 
     if test:
@@ -646,7 +425,7 @@ pre-cat final commit."""
     State.cd(workset)
     out = cmd("git status")
     print "git status - " + out
-    match = re.search("# HEAD detached at 0a1366f",out)
+    match = re.search("# HEAD detached at 0a1366f", out)
     if not match == None and match.group():
         # next level
         print "Yes! My songs are back. Kitty is foiled again.!\n"
@@ -668,7 +447,7 @@ name as the commit identifier.\n """
             print "base cwd : " + State.cwd
         out = cmd("git status")
         print out
-        match = re.search("# HEAD detached at v0.2",out)
+        match = re.search("# HEAD detached at v0.2", out)
         if not match == None and match.group():
             print "Good. You can use the tag. Now, restore the repo to its final (5th) commit state."
             print "(hint - the last commit is tagged 'master')"
@@ -682,7 +461,7 @@ name as the commit identifier.\n """
             out = cmd("git log --pretty=oneline | head -1")
             print "git - " + out
 
-            match = re.search("e808d7",out)
+            match = re.search("e808d7", out)
             if match.group():
                 print "Yes! All is restored. Complete!\n"
                 retval = True
@@ -694,14 +473,13 @@ name as the commit identifier.\n """
         #failed to move to right place
         print "The songs are not quite right still. Try again."
 
-
     return retval
 
 
 @koan
-def koan_7(*args,**kwargs):
+def koan_7(*args, **kwargs):
     """git clone, push, pull."""
-    test,answers = test_vals(*args,**kwargs)
+    test, answers = test_vals(*args, **kwargs)
     State.delete_workset('rollback')
     State.load_workset('rollback')
     retval = False
@@ -726,7 +504,7 @@ called 'clone_rollback'."""
         State.cd()
         out = cmd("git clone rollback clone_rollback")
 
-    ok = check('clone_rollback',['git status'],'# On branch master')
+    ok = check('clone_rollback', ['git status'], '# On branch master')
 
     if ok:
         print """
@@ -735,14 +513,13 @@ Work repo cloned. Now cd to the clone_work directory and add a new file called
 
         if not test:
             out = pause()
-        if test or out =="\t":
+        if test or out == "\t":
             State.cd('clone_rollback')
             out = cmd("echo zipper file > zipper")
             out = cmd("git add zipper")
             out = cmd("git commit -m 'Added zipper file.'")
 
-        ok = check('clone_rollback',['git checkout zipper'],'',verbose=True)
-
+        ok = check('clone_rollback', ['git checkout zipper'], '', verbose=True)
 
         print """
 Good. Now that you've added the 'zipper' file use 'git push' command to push your
@@ -753,17 +530,14 @@ change to the master repo in './rollback'. """
 
         if not test:
             out = pause()
-        if test or out =="\t":
+        if test or out == "\t":
             State.cd("clone_rollback")
             out = cmd("git push")
 
-
-        ok = check('rollback',['git checkout master','git checkout zipper'],'',True)
+        ok = check('rollback', ['git checkout master', 'git checkout zipper'], '', True)
 
         if not test:
             out = pause()
-
-
 
     print """
 
@@ -776,16 +550,17 @@ ent sort of workflow. We will cover that later."""
 
     return True
 
+
 @koan
-def koan_8(*args,**kwargs):
+def koan_8(*args, **kwargs):
     """Merge mac, linux, and windows branches together into a single master."""
 
     # 1/26/ the k8 repo is a mess. Need to simplify it and make it work right.
     sys_reset()
-    workset='k8'
-    test,answers=test_vals(*args,**kwargs)
+    workset = 'k8'
+    test, answers = test_vals(*args, **kwargs)
 
-    State.load_workset(workset,live_git=True)
+    State.load_workset(workset, live_git=True)
     State.cd(workset)
 
     out = cmd("git checkout -b master remotes/origin/master")
@@ -802,7 +577,6 @@ The workset is in the k8 directory. Open that in another shell now.
     if not test:
         out = pause()
 
-
     print """
 Now, cd into the k8 dir and inspect the repo. Try three commands:
 
@@ -812,7 +586,7 @@ gitk       (gitk is visual tool for inspecting a repo).
 
 """
     if not test:
-        out=pause()
+        out = pause()
     print """
 You should be on the master branch ('git branch' to check). You  should see
 two files: code and README.
@@ -830,14 +604,14 @@ it is different than for the master branch.
 """
 
     if not test:
-        out=pause()
+        out = pause()
     print """
 Make a change to the 'code' file (doesn't matter what it is). Stage the changes
 with 'git add' and commit them with 'git commit'.
 """
 
     if not test:
-        out=pause()
+        out = pause()
     print """
 Now switch back to the master branch ('git checkout ...') . Inspect the 'code'
 file one last time to verify that it is different than the one in the 'fixup'
@@ -845,7 +619,7 @@ branch.
 """
 
     if not test:
-        out=pause()
+        out = pause()
     print """
 Now we are going to use the 'rebase' command to integrate the fixup changes
 into master. The command to use is: git rebase fixup.
@@ -890,8 +664,6 @@ Now check the log again. You should see the changes you made reflected in the
 log. That's it!
 """
 
-
-
     return True
 
 
@@ -905,16 +677,17 @@ Command line arguments:
 -k <number> jump to koan <number>
 """
 
+
 if __name__ == "__main__":
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:],"hrk:d",["reset","koan="])
+        opts, args = getopt.getopt(sys.argv[1:], "hrk:d", ["reset", "koan="])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
 
     counter = 1
-    for opt,arg in opts:
+    for opt, arg in opts:
         if opt in ("-h,--help"):
             usage()
             sys.exit(0)
@@ -940,7 +713,7 @@ These koans cover basic concepts from Pro Git by Scott Chacon
 http://git-scm.com/book/en/Git-Basics .
 """
 
-    instr="""
+    instr = """
 Some usage instructions
 
 1. A task can be skipped by entering a tab at the prompt (debug feature).
@@ -955,13 +728,10 @@ Some usage instructions
     koans = [k for k in dir() if 'koan_' in k]
 
     for koan in sorted(koans):
-        out = re.search("\d(_\d)?$",koan)
-        
-        if float(out.group(0).replace("_",".")) < State.get_counter():
+        out = re.search("\d(_\d)?$", koan)
+
+        if float(out.group(0).replace("_", ".")) < State.get_counter():
             continue
         locals()[koan]()
-
-
-    #git --git-dir=/Users/joelbremson/code/git_koans/.git --work-tree=./git_koans/ status
 
 
