@@ -15,6 +15,7 @@ from koan_support import *
 To start fresh rm the .koan_state file in ./git_koans.
 """
 
+
 @koan
 def koan_1(*args, **kwargs):
     """Init the first repo."""
@@ -262,7 +263,8 @@ That's all.
 
 @koan
 def koan_5(*args, **kwargs):
-    """This koan is a small puzzle in which the user is asked to figure out which file has been modified since staging. The answer can be found with 'status'."""
+    """This koan is a small puzzle in which the user is asked to figure out
+    which file has been modified since staging. The answer can be found with 'status'."""
 
     test, answers = test_vals(*args, **kwargs)
     answers = list(answers)

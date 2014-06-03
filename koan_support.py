@@ -24,7 +24,7 @@ class State:
 
     except (AttributeError, IOError):
         # no prior state to return to.
-        print "In exception of __init__"
+        #print "In exception of __init__"
 
         f = open(target, "w")
         pickle.dump(keep, f)
@@ -33,8 +33,8 @@ class State:
 
     @classmethod
     def abs_path(cls, dir=None):
-        """Make an absolute dir path through the git_koans home dir to location 'dir' (a relative path).
-Returns path string."""
+        """Make an absolute dir path through the git_koans home dir to
+        location 'dir' (a relative path). Returns path string."""
         os.chdir(cls.basedir)
         if dir in [None, '']:
             out = cls.basedir
@@ -89,8 +89,10 @@ Returns path string."""
             dirp = os.path.join(".sets", workset)
             abs = os.path.abspath(dirp)
             os.chdir(abs)
-            gitdir = os.path.join(abs, ".git")
-            mitdir = os.path.join(abs, ".mit")
+            gitdir = os.path.join(abs, ".git") # .git dir could have any user commits
+            mitdir = os.path.join(abs, ".mit") # calling the ref repo '.mit' keeps git
+                                                # from thinking it's a live repo. Keeps
+                                                # it pure.
             shutil.rmtree(gitdir, ignore_errors=True)
             shutil.copytree(mitdir, gitdir)
             shutil.rmtree(State.abs_path(workset), ignore_errors=True)
@@ -164,8 +166,10 @@ def check(loc, setup=[], test_str='', verbose=False):
 
 
 def cmd(cmd, verbose=False):
-    """Calls subprocess.check_output with 'shell=True' and stderr redirection. Returns
-    return val from subprocess. 'verbose' flag is a boolean. Set to true for debugging info. Short cut."""
+    """Calls subprocess.check_output with 'shell=True' and stderr redirection.
+    Returns return val from subprocess. 'verbose' flag is a boolean. Set to
+    true for debugging info. Short cut."""
+
     proc = subprocess.Popen([cmd], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, shell=True);
     out = ""
     while True:
@@ -177,7 +181,6 @@ def cmd(cmd, verbose=False):
         else:
             break
     return out
-    #return subprocess.check_output(cmd, stderr=subprocess.STDOUT, shell=False);
 
 
 def koan(fxn):
@@ -212,9 +215,12 @@ def test_vals(*args, **kwargs):
 
 def git_set_tree(repo):
     #git --git-dir=/Users/joelbremson/code/git_koans/.git --work-tree=./git_koans/ status "
-    """Set the working repo to 'repo'. This is assumed to sit in the dir under /git_koans. Always.
+    """Set the working repo to 'repo'. This is assumed to sit in the dir
+    under /git_koans. Always.
 
-This is required because there are a lot of git repos potentially floating about in the workspace."""
+    This is required because there are a lot of git repos potentially
+    floating about in the workspace."""
+
     target = State.abs_path(repo)
     out = cmd("git config --git_dir " + target)
     print out
