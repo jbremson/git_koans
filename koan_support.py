@@ -182,9 +182,8 @@ def cmd(cmd, verbose=False):
 
 def koan(fxn):
     """Prints koan header and increments state counter (given the koan is passed)."""
-
-    def new_fxn(header=True, *args, **kwargs ):
-        header = header
+    def new_fxn(*args, **kwargs):
+        header = kwargs.get('header', True)
         test, answers = test_vals(*args, **kwargs)
         if header:
             print "\n\n********  Koan " + str(State.get_counter()) + "  ********\n\n"
@@ -196,7 +195,8 @@ def koan(fxn):
             print ("\n\nThrough failure learning is achieved. Try it again.\n\n")
             if not test:
                 # this runs the caller fxn !!!
-                getattr(sys.modules['koans'], fxn.__name__)(header=False)
+                kwargs['header']=False
+                getattr(sys.modules['koans'], fxn.__name__)(**kwargs)
                 #globals()[fxn.__name__](header=False)
         return success
 
