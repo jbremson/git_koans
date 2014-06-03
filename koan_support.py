@@ -2,6 +2,7 @@ import os
 import pickle
 import shutil
 import subprocess
+import sys
 from collections import deque
 import re
 
@@ -182,8 +183,8 @@ def cmd(cmd, verbose=False):
 def koan(fxn):
     """Prints koan header and increments state counter (given the koan is passed)."""
 
-    def new_fxn(*args, **kwargs):
-        header = kwargs.get('header', True)
+    def new_fxn(header=True, *args, **kwargs ):
+        header = header
         test, answers = test_vals(*args, **kwargs)
         if header:
             print "\n\n********  Koan " + str(State.get_counter()) + "  ********\n\n"
@@ -195,7 +196,8 @@ def koan(fxn):
             print ("\n\nThrough failure learning is achieved. Try it again.\n\n")
             if not test:
                 # this runs the caller fxn !!!
-                globals()[fxn.__name__](header=False)
+                getattr(sys.modules['koans'], fxn.__name__)(header=False)
+                #globals()[fxn.__name__](header=False)
         return success
 
     return new_fxn

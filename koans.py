@@ -1,7 +1,5 @@
-#python 2.6 / 2.7
+from koan_support import *
 
-__author__ = 'joelbremson'
-__date__ = "1/23/14"
 
 """How to write a koan.
 
@@ -16,13 +14,6 @@ __date__ = "1/23/14"
 
 To start fresh rm the .koan_state file in ./git_koans.
 """
-
-import getopt
-import sys
-from koan_support import *
-
-#Test file for git koans
-
 
 @koan
 def koan_1(*args, **kwargs):
@@ -307,7 +298,7 @@ There are two objectives:
 Begin with the first objective by adding and committing the files 'a1','b1' and 'c1'
 to the repo. Use the 'set_a' directory. Don't force any commits.
 
-Try it first without editing the .gitignore file. 
+Try it first without editing the .gitignore file.
 """
 
     if not test:
@@ -315,7 +306,7 @@ Try it first without editing the .gitignore file.
     print """
 The file 'b1' should have been rejected. Now edit the .gitignore file and
 remove the line with b1 on it. You can verify it by trying to checkout
-the file with 'git checkout b1'. 
+the file with 'git checkout b1'.
 
 Hint: Don't forget to add b1.
 """
@@ -663,75 +654,8 @@ You will now have a chance to reword the commit log for your edited commit.
 Now check the log again. You should see the changes you made reflected in the
 log. That's it!
 """
-
     return True
 
 
-def usage():
-    print """
-
-Command line arguments:
-
--h          print help message
--r          reset system
--k <number> jump to koan <number>
-"""
-
-
-if __name__ == "__main__":
-
-    try:
-        opts, args = getopt.getopt(sys.argv[1:], "hrk:d", ["reset", "koan="])
-    except getopt.GetoptError:
-        usage()
-        sys.exit(2)
-
-    counter = 1
-    for opt, arg in opts:
-        if opt in ("-h,--help"):
-            usage()
-            sys.exit(0)
-        if opt in ("-r, --reset"):
-            print "Resetting System..."
-            sys_reset()
-        if opt in ("-k,--koan"):
-            counter = arg
-            print "Starting at koan " + str(arg)
-
-    State.set_counter(counter)
-    print "Welcome to git-koans...\n"
-    print """\n
-
-Presented here are koans, or puzzles, to assist in the learning of git.
-
-To run these you will need python and git installed.
-
-Run the koans in this shell and do the exercises in another shell.
-
-These koans cover basic concepts from Pro Git by Scott Chacon
-(http://git-scm.com/book). See chapter 2 for assistance.
-http://git-scm.com/book/en/Git-Basics .
-"""
-
-    instr = """
-Some usage instructions
-
-1. A task can be skipped by entering a tab at the prompt (debug feature).
-2. The system should remember which koan you left off on (although not
-   where you left off mid-koan.).
-"""
-
-
-
-    # this should store state so user doesn't have to repeat with restart.
-    # iterate over koans using the symbol table
-    koans = [k for k in dir() if 'koan_' in k]
-
-    for koan in sorted(koans):
-        out = re.search("\d(_\d)?$", koan)
-
-        if float(out.group(0).replace("_", ".")) < State.get_counter():
-            continue
-        locals()[koan]()
-
-
+def test_fxn():
+    print "Test function ran: success!!!"
